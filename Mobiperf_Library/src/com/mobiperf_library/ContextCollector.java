@@ -15,8 +15,8 @@ public class ContextCollector {
 	// interval.
 	private volatile Vector<Map<String, Object>> contextResultVector;
 	private Map<String, Object> currentContext;
-	public int busyInterval = 1000;
-	public int idleInterval = 6000;
+	public int busyInterval = 2000;
+	public int idleInterval = 60000;
 	Thread runnable = new Thread() {
 		public static final String TYPE = "context";
 		public MeasurementResult result;
@@ -66,8 +66,9 @@ public class ContextCollector {
 						phoneUtils.getCurrentBatteryLevel());
 				currentContext = contextResult;
 				contextResultVector.add(contextResult);
-				System.out.println("context result="
-						+ currentContext.toString());
+				if(contextResultVector.size()>2000){
+					contextResultVector.clear();
+				}
 				if (isBusy == 0) {
 					interval = idleInterval;
 				} else {
