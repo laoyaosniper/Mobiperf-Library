@@ -206,6 +206,43 @@ public class TracerouteTask extends MeasurementTask  implements PreemptibleMeasu
     this.maxHopCount=((TracerouteDesc) this.measurementDesc).maxHopCount;
   }
 
+  protected TracerouteTask(Parcel in) {
+    super(in);
+    duration = in.readLong();
+    taskProgress = (TaskProgress) in.readSerializable();
+    stopFlag = (in.readByte() != 0);
+    pauseFlag = (in.readByte() != 0);
+    hopHosts = new ArrayList<HopInfo>();
+    ttl = in.readInt();
+    maxHopCount = ((TracerouteDesc) this.measurementDesc).maxHopCount;
+  }
+
+  public static final Parcelable.Creator<TracerouteTask> CREATOR
+  = new Parcelable.Creator<TracerouteTask>() {
+    public TracerouteTask createFromParcel(Parcel in) {
+      return new TracerouteTask(in);
+    }
+
+    public TracerouteTask[] newArray(int size) {
+      return new TracerouteTask[size];
+    }
+  };
+
+  @Override
+  public int describeContents() {
+    return super.describeContents();
+  }
+
+  @Override
+  public void writeToParcel(Parcel dest, int flags) {
+    super.writeToParcel(dest, flags);
+    dest.writeLong(duration);
+    dest.writeSerializable(taskProgress);
+    dest.writeByte((byte)(stopFlag ? 1 : 0));
+    dest.writeByte((byte)(pauseFlag ? 1 : 0));
+    dest.writeInt(ttl);
+  }
+  
   /**
    * Returns a copy of the TracerouteTask
    */
@@ -601,4 +638,6 @@ public class TracerouteTask extends MeasurementTask  implements PreemptibleMeasu
     cleanUp(pingProc);
     return true;
   }
+  
+  
 }

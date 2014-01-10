@@ -169,7 +169,33 @@ public class PingTask extends MeasurementTask{
     //    this.taskProgress=TaskProgress.FAILED;
     //    this.stopFlag=false;
   }
+  
+  protected PingTask(Parcel in) {
+    super(in);
+    duration = in.readLong();
+  }
 
+  public static final Parcelable.Creator<PingTask> CREATOR
+  = new Parcelable.Creator<PingTask>() {
+    public PingTask createFromParcel(Parcel in) {
+      return new PingTask(in);
+    }
+
+    public PingTask[] newArray(int size) {
+      return new PingTask[size];
+    }
+  };
+
+  @Override
+  public int describeContents() {
+    return super.describeContents();
+  }
+
+  @Override
+  public void writeToParcel(Parcel dest, int flags) {
+    super.writeToParcel(dest, flags);
+    dest.writeLong(duration);
+  }
   /**
    * Returns a copy of the PingTask
    */

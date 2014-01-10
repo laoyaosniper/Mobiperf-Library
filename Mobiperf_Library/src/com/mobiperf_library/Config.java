@@ -29,6 +29,7 @@ public interface Config {
   public static final int MSG_UNREGISTER_CLIENT = 2;
   public static final int MSG_SUBMIT_TASK = 3;
   public static final int MSG_SEND_RESULT = 4;
+  public static final int MSG_CANCEL_TASK = 5;
 
 
 
@@ -53,10 +54,11 @@ public interface Config {
   public static final double DEFAULT_INTERVAL_BETWEEN_ICMP_PACKET_SEC = 0.5;
 
 
-
   public static final int TRACEROUTE_TASK_DURATION=30*500;
+  // TODO(Hongyi): task with 0 duration?
   public static final int DNS_TASK_DURATION=0;
   public static final int HTTP_TASK_DURATION=0;
+  public static final int PING_TASK_DURATION = PING_COUNT_PER_MEASUREMENT * 500;
   public static final int DEFAULT_PARALLEL_TASK_DURATION=5*1000;
   public static final int DEFAULT_TASK_DURATION_TIMEOUT=5*1000;
 

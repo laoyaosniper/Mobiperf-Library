@@ -118,7 +118,33 @@ public class DnsLookupTask extends MeasurementTask{
       desc.count, desc.priority, desc.parameters));
     this.duration=Config.DNS_TASK_DURATION;
   }
+  
+  protected DnsLookupTask(Parcel in) {
+    super(in);
+    duration = in.readLong();
+  }
 
+  public static final Parcelable.Creator<DnsLookupTask> CREATOR
+  = new Parcelable.Creator<DnsLookupTask>() {
+    public DnsLookupTask createFromParcel(Parcel in) {
+      return new DnsLookupTask(in);
+    }
+
+    public DnsLookupTask[] newArray(int size) {
+      return new DnsLookupTask[size];
+    }
+  };
+
+  @Override
+  public int describeContents() {
+    return super.describeContents();
+  }
+
+  @Override
+  public void writeToParcel(Parcel dest, int flags) {
+    super.writeToParcel(dest, flags);
+    dest.writeLong(duration);
+  }
   /**
    * Returns a copy of the DnsLookupTask
    */

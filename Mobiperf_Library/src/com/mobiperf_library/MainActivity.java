@@ -1,6 +1,8 @@
 package com.mobiperf_library;
 
+import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -65,32 +67,102 @@ public class MainActivity extends Activity {
     button.setText("Start Scheduler");  
     button.setOnClickListener(new View.OnClickListener()   
     {
+      private int lastLocalId = -1;
       public void onClick(View view) 
       {
         Map<String, String> params = new HashMap<String, String>();
         int taskType = 0;
-        switch (counter % 4) {
+        int priority = MeasurementTask.USER_PRIORITY;
+        Date endTime = null;
+        TaskParams taskparam;
+        ArrayList<TaskParams> realTaskParams = new ArrayList<TaskParams>();
+        switch (counter % 4) {          
           case 0:
-            taskType = TaskParams.DNSLookup;
-            params.put("target","www.google.com");
-            break;
-          case 1:
+//            try {
+//              libraryAPI.cancelTask(lastLocalId);
+//            } catch (Exception e) {
+//            }
             taskType = TaskParams.HTTP;
             params.put("url","www.google.com");
-            break;            
-          case 2:
-            taskType = TaskParams.Ping;
+            endTime = new Date(System.currentTimeMillis() + 5000L);
+            taskparam = new TaskParams(taskType, "mykey1"
+              , Calendar.getInstance().getTime(), endTime, 120, 1
+              , priority, params);
+            realTaskParams.add(taskparam);
+            
+            taskType = TaskParams.DNSLookup;
             params.put("target","www.google.com");
-            break;            
-          case 3:
+            endTime = new Date(System.currentTimeMillis() + 5000L);
+            taskparam = new TaskParams(taskType, "mykey1"
+              , Calendar.getInstance().getTime(), endTime, 120, 1
+              , priority, params);
+            realTaskParams.add(taskparam);
+            
+            taskType = TaskParams.Sequential;
+            taskparam = new TaskParams(taskType, "mykey1"
+              , Calendar.getInstance().getTime(), endTime, 120, 1
+              , priority, params);
+            lastLocalId = libraryAPI.addMultipleTasks(taskparam, realTaskParams);
+            break;  
+          case 1:
             taskType = TaskParams.Traceroute;
             params.put("target","www.google.com");
+            priority = MeasurementTask.INVALID_PRIORITY;
+            taskparam = new TaskParams(taskType, "mykey1"
+              , Calendar.getInstance().getTime(), endTime, 120, 1
+              , priority, params);
+            realTaskParams.add(taskparam);
+            
+            taskType = TaskParams.Ping;
+            params.put("target","www.google.com");
+            endTime = new Date(System.currentTimeMillis() + 5000L);
+            taskparam = new TaskParams(taskType, "mykey1"
+              , Calendar.getInstance().getTime(), endTime, 120, 1
+              , priority, params);
+            realTaskParams.add(taskparam);
+            
+            taskType = TaskParams.Parallel;
+            taskparam = new TaskParams(taskType, "mykey1"
+              , Calendar.getInstance().getTime(), endTime, 120, 1
+              , priority, params);
+            lastLocalId = libraryAPI.addMultipleTasks(taskparam, realTaskParams);
+            
+//            try {
+//              libraryAPI.cancelTask(lastLocalId);
+//            } catch (Exception e) {
+//            }
+            break;   
+          case 2:
+//          try {
+//            libraryAPI.cancelTask(lastLocalId);
+//          } catch (Exception e) {
+//          }
+          taskType = TaskParams.Ping;
+          params.put("target","www.google.com");
+          endTime = new Date(System.currentTimeMillis() + 5000L);
+          taskparam = new TaskParams(taskType, "mykey1"
+            , Calendar.getInstance().getTime(), endTime, 120, 1
+            , priority, params);
+          lastLocalId = libraryAPI.addTask(taskparam);
+          break;         
+          case 3:
+//            try {
+//              libraryAPI.cancelTask(lastLocalId);
+//            } catch (Exception e) {
+//            }
+            taskType = TaskParams.DNSLookup;
+            params.put("target","www.google.com");
+            endTime = new Date(System.currentTimeMillis() + 5000L);
+            taskparam = new TaskParams(taskType, "mykey1"
+              , Calendar.getInstance().getTime(), endTime, 120, 1
+              , priority, params);
+            lastLocalId = libraryAPI.addTask(taskparam);
             break;
         }
-        TaskParams taskparam = new TaskParams(taskType, "mykey1"
-          , Calendar.getInstance().getTime(), null, 120, 1
-          , MeasurementTask.USER_PRIORITY+1,params);
-        libraryAPI.addTask(taskparam);
+//        TaskParams taskparam = new TaskParams(taskType, "mykey1"
+//          , Calendar.getInstance().getTime(), endTime, 120, 1
+//          , priority, params);
+//        lastLocalId = libraryAPI.addTask(taskparam);
         counter++;
       }
     });

@@ -5,6 +5,7 @@ import java.io.InvalidClassException;
 import java.math.BigInteger;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Set;
 import java.util.concurrent.Callable;
@@ -19,8 +20,10 @@ import com.mobiperf_library.util.Logger;
 import com.mobiperf_library.util.Util;
 
 import android.content.Context;
+import android.os.Parcel;
+import android.os.Parcelable;
 
-public abstract class MeasurementTask implements Callable<MeasurementResult[]>, Comparable {
+public abstract class MeasurementTask implements Callable<MeasurementResult[]>, Comparable, Parcelable {
   protected MeasurementDesc measurementDesc;
   //  protected Context parent;
 
@@ -220,4 +223,20 @@ public abstract class MeasurementTask implements Callable<MeasurementResult[]>, 
     return this.hashCode()+"";
 
   }
+  
+  protected MeasurementTask(Parcel in) {
+    ClassLoader loader = Thread.currentThread().getContextClassLoader();
+    measurementDesc = in.readParcelable(loader);
+  }
+
+  @Override
+  public int describeContents() {
+    return 0;
+  }
+
+  @Override
+  public void writeToParcel(Parcel dest, int flags) {
+    dest.writeParcelable(measurementDesc, flags);
+  }
+  
 }

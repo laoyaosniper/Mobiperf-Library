@@ -13,6 +13,9 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
+import android.os.Parcel;
+import android.os.Parcelable;
+
 import com.mobiperf_library.Config;
 import com.mobiperf_library.MeasurementDesc;
 import com.mobiperf_library.MeasurementResult;
@@ -52,7 +55,33 @@ public class ParallelTask extends MeasurementTask{
     @Override
     public String getType() {
       return ParallelTask.TYPE;
-    }  
+    }   
+    
+    protected ParallelDesc(Parcel in) {
+      super(in);
+      
+    }
+
+    public static final Parcelable.Creator<ParallelDesc> CREATOR
+    = new Parcelable.Creator<ParallelDesc>() {
+      public ParallelDesc createFromParcel(Parcel in) {
+        return new ParallelDesc(in);
+      }
+
+      public ParallelDesc[] newArray(int size) {
+        return new ParallelDesc[size];
+      }
+    };
+
+    @Override
+    public int describeContents() {
+      return super.describeContents();
+    }
+
+    @Override
+    public void writeToParcel(Parcel dest, int flags) {
+      super.writeToParcel(dest, flags);
+    }
   }
 
   @SuppressWarnings("rawtypes")
@@ -76,7 +105,45 @@ public class ParallelTask extends MeasurementTask{
     this.duration=maxduration;
 
   }
+  
+  protected ParallelTask(Parcel in) {
+    super(in);
+    ClassLoader loader = Thread.currentThread().getContextClassLoader();
+    MeasurementTask[] tempTasks = (MeasurementTask[])in.readParcelableArray(loader);
+    executor = Executors.newFixedThreadPool(tasks.size());
+    tasks = new ArrayList<MeasurementTask>();
+    long maxDuration = 0;
+    for ( MeasurementTask mt : tempTasks ) {
+      tasks.add(mt);
+      if (mt.getDuration() > maxDuration) {
+        maxDuration = mt.getDuration();
+      }
+    }
+    this.duration = maxDuration;
+  }
 
+  public static final Parcelable.Creator<ParallelTask> CREATOR
+  = new Parcelable.Creator<ParallelTask>() {
+    public ParallelTask createFromParcel(Parcel in) {
+      return new ParallelTask(in);
+    }
+
+    public ParallelTask[] newArray(int size) {
+      return new ParallelTask[size];
+    }
+  };
+
+  @Override
+  public int describeContents() {
+    return super.describeContents();
+  }
+
+  @Override
+  public void writeToParcel(Parcel dest, int flags) {
+    super.writeToParcel(dest, flags);
+    dest.writeParcelableArray((MeasurementTask[])tasks.toArray(), flags);
+  }
+  
   @Override
   public String getDescriptor() {
     return DESCRIPTOR;
@@ -114,7 +181,8 @@ public class ParallelTask extends MeasurementTask{
     finally{
       executor.shutdown();
     }
-    return (MeasurementResult[])allresults.toArray();
+    return (MeasurementResult[])allresults.toArray(
+      new MeasurementResult[allresults.size()]);
   }
 
   @Override

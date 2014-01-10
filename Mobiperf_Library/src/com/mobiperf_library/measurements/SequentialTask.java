@@ -23,6 +23,8 @@ import com.mobiperf_library.exceptions.MeasurementError;
 import com.mobiperf_library.util.Logger;
 
 import android.content.Context;
+import android.os.Parcel;
+import android.os.Parcelable;
 
 public class SequentialTask extends MeasurementTask{
 
@@ -78,6 +80,45 @@ public class SequentialTask extends MeasurementTask{
     this.duration=totalduration;
 
   }
+  
+  protected SequentialTask(Parcel in) {
+    super(in);
+    ClassLoader loader = Thread.currentThread().getContextClassLoader();
+    MeasurementTask[] tempTasks = (MeasurementTask[])in.readParcelableArray(loader);
+    executor = Executors.newFixedThreadPool(tasks.size());
+    tasks = new ArrayList<MeasurementTask>();
+    long maxDuration = 0;
+    for ( MeasurementTask mt : tempTasks ) {
+      tasks.add(mt);
+      if (mt.getDuration() > maxDuration) {
+        maxDuration = mt.getDuration();
+      }
+    }
+    this.duration = maxDuration;
+  }
+
+  public static final Parcelable.Creator<SequentialTask> CREATOR
+  = new Parcelable.Creator<SequentialTask>() {
+    public SequentialTask createFromParcel(Parcel in) {
+      return new SequentialTask(in);
+    }
+
+    public SequentialTask[] newArray(int size) {
+      return new SequentialTask[size];
+    }
+  };
+
+  @Override
+  public int describeContents() {
+    return super.describeContents();
+  }
+
+  @Override
+  public void writeToParcel(Parcel dest, int flags) {
+    super.writeToParcel(dest, flags);
+    dest.writeParcelableArray((MeasurementTask[])tasks.toArray(), flags);
+  }
+  
 
   @Override
   public String getDescriptor() {
@@ -114,7 +155,15 @@ public class SequentialTask extends MeasurementTask{
     finally{
       executor.shutdown();
     }
-    return (MeasurementResult[])allresults.toArray();
+    
+//    MeasurementResult[] tempResults = new MeasurementResult[allresults.size()];
+//    int counter = 0;
+//    for ( MeasurementResult mr : allresults ) {
+//      tempResults[counter++] = mr;
+//    }
+//    return tempResults;
+    return (MeasurementResult[])allresults.toArray(
+      new MeasurementResult[allresults.size()]);
   }
 
   @Override

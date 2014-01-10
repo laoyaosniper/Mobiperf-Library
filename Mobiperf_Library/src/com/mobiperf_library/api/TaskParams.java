@@ -17,6 +17,8 @@ public class TaskParams {
   public final static int Traceroute = 4;
   public final static int TCPThroughput = 5;
   public final static int UDPBurst = 6;
+  public final static int Parallel = 101;
+  public final static int Sequential = 102;
   
   public int taskType;
   // TODO(Hongyi): discuss on those temporary fields

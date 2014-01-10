@@ -83,7 +83,33 @@ public class HttpTask extends MeasurementTask {
       desc.count, desc.priority, desc.parameters));
     this.duration=Config.HTTP_TASK_DURATION;
   }
+  
+  protected HttpTask(Parcel in) {
+    super(in);
+    duration = in.readLong();
+  }
 
+  public static final Parcelable.Creator<HttpTask> CREATOR
+  = new Parcelable.Creator<HttpTask>() {
+    public HttpTask createFromParcel(Parcel in) {
+      return new HttpTask(in);
+    }
+
+    public HttpTask[] newArray(int size) {
+      return new HttpTask[size];
+    }
+  };
+
+  @Override
+  public int describeContents() {
+    return super.describeContents();
+  }
+
+  @Override
+  public void writeToParcel(Parcel dest, int flags) {
+    super.writeToParcel(dest, flags);
+    dest.writeLong(duration);
+  }
   /**
    * The description of a HTTP measurement 
    */

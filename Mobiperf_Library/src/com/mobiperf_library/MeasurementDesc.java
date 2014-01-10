@@ -5,6 +5,11 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.Map;
 
+import com.mobiperf_library.measurements.DnsLookupTask;
+import com.mobiperf_library.measurements.HttpTask;
+import com.mobiperf_library.measurements.PingTask;
+import com.mobiperf_library.measurements.TracerouteTask;
+
 import android.os.Parcel;
 import android.os.Parcelable;
 
@@ -60,6 +65,20 @@ public abstract class MeasurementDesc implements Parcelable{
     if (endTime == null || 
         endTime.getTime() - now > Config.TASK_EXPIRATION_MSEC) {
       this.endTime = new Date(now + Config.TASK_EXPIRATION_MSEC);
+//      /** Hongyi: Task expiration time seems too long so no preemption 
+//       * will be performed. Change to specific task duration
+//       */
+//      if ( type.equals(DnsLookupTask.TYPE) ) {
+//        this.endTime = new Date(now + Config.DNS_TASK_DURATION);
+//      } else if ( type.equals(HttpTask.TYPE) ) {
+//        this.endTime = new Date(now + Config.HTTP_TASK_DURATION);
+//      } else if ( type.equals(PingTask.TYPE) ) {
+//        this.endTime = new Date(now + Config.PING_TASK_DURATION);
+//      } else if ( type.equals(TracerouteTask.TYPE) ) {
+//        this.endTime = new Date(now + Config.TRACEROUTE_TASK_DURATION);
+//      } else {
+//        this.endTime = new Date(now + Config.TASK_EXPIRATION_MSEC);
+//      }
     } else {
       this.endTime = endTime;
     }
