@@ -74,6 +74,8 @@ public interface Config {
   public static final int MAX_CHECKIN_RETRY_COUNT = 3;
   public static final long PAUSE_BETWEEN_CHECKIN_CHANGE_MSEC = 10 * 1000L;
   public static final long MIN_CHECKIN_INTERVAL_SEC = 3600;
+  
+  public static final int DEFAULT_CONTEXT_INTERVAL_SEC = 1;
 
 
 

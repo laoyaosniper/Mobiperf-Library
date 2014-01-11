@@ -108,7 +108,7 @@ public class MeasurementScheduler extends Service{
     PhoneUtils.setGlobalContext(this.getApplicationContext());
     // Initialize context collector
     contextCollector = new ContextCollector();
-    contextCollector.start();
+    //TODO
 
     phoneUtils = PhoneUtils.getPhoneUtils();
     phoneUtils.registerSignalStrengthListener();
