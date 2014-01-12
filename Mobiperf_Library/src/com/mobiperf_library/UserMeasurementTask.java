@@ -24,11 +24,6 @@ import com.mobiperf_library.exceptions.MeasurementError;
 import com.mobiperf_library.util.Logger;
 import com.mobiperf_library.util.PhoneUtils;
 
-/**
- * @author Hongyi Yao
- *
- */
-
 public class UserMeasurementTask implements Callable<MeasurementResult[]> {
   MeasurementTask realTask;
   MeasurementScheduler scheduler;
@@ -71,8 +66,8 @@ public class UserMeasurementTask implements Callable<MeasurementResult[]> {
         Logger.e(errorString);
         intent.putExtra(UpdateIntent.ERROR_STRING_PAYLOAD, errorString);
 
-        // TODO(Hongyi): task is stopped, shall we return partial result? Ashkan: No, null
-        // Hongyi: currently just return null
+       
+        // TODO(Hongyi): currently just return null
         scheduler.sendResultMessage(null, clientKey, taskId);
 
       }

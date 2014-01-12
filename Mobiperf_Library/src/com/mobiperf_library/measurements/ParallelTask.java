@@ -21,6 +21,7 @@ import com.mobiperf_library.MeasurementDesc;
 import com.mobiperf_library.MeasurementResult;
 import com.mobiperf_library.MeasurementTask;
 import com.mobiperf_library.exceptions.MeasurementError;
+import com.mobiperf_library.util.Logger;
 
 
 
@@ -157,7 +158,7 @@ public class ParallelTask extends MeasurementTask{
     if(timeout==0){
       timeout=Config.DEFAULT_PARALLEL_TASK_DURATION;
     }else{
-      timeout*=2;//TODO
+      timeout*=2;
     }
     ArrayList<MeasurementResult> allresults=new ArrayList<MeasurementResult>();
     List<Future<MeasurementResult[]>> futures;
@@ -165,15 +166,14 @@ public class ParallelTask extends MeasurementTask{
       futures=executor.invokeAll(this.tasks,timeout,TimeUnit.MILLISECONDS);
       for(Future<MeasurementResult[]> f: futures){
         MeasurementResult[] r=f.get();
-        for(int i=0;i<r.length;i++){//TODO
+        for(int i=0;i<r.length;i++){
           allresults.add(r[i]);
         }
       }
 
     } catch (InterruptedException e) {
-      //TODO test it--> timeout
 
-      e.printStackTrace();
+      Logger.e(this.generateTaskID()+" got interrupted");
     }catch (ExecutionException e) {
       //TODO
       e.printStackTrace();

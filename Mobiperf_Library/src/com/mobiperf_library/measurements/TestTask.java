@@ -147,7 +147,7 @@ public class TestTask extends MeasurementTask implements PreemptibleMeasurementT
 
     //    result=new MeasurementResult(phoneUtils.getDeviceInfo().deviceId,
     //        phoneUtils.getDeviceProperty(), TestTask.TYPE, System.currentTimeMillis() * 1000,
-    //        tp, this.measurementDesc);//TODO
+    //        tp, this.measurementDesc);
     result=new MeasurementResult[1];
     result[0]=new MeasurementResult(phoneUtils.getDeviceInfo().deviceId,
       null, TestTask.TYPE, System.currentTimeMillis() * 1000,
@@ -188,12 +188,6 @@ public class TestTask extends MeasurementTask implements PreemptibleMeasurementT
     return true;
   }
 
-
-  //  @Override
-  //  public void resume() {
-  //    // TODO Auto-generated method stub
-  //
-  //  }
 
 
   @Override

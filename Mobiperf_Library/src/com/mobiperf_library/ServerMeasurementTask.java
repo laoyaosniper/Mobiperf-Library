@@ -25,10 +25,6 @@ import com.mobiperf_library.exceptions.MeasurementSkippedException;
 import com.mobiperf_library.util.Logger;
 import com.mobiperf_library.util.PhoneUtils;
 
-/**
- * @author Hongyi Yao
- *
- */
 
 
 public class ServerMeasurementTask implements Callable<MeasurementResult []> {
@@ -74,7 +70,7 @@ public class ServerMeasurementTask implements Callable<MeasurementResult []> {
           Logger.e(errorString);
           intent.putExtra(UpdateIntent.ERROR_STRING_PAYLOAD, errorString);
 
-          // TODO(Hongyi): task is stopped, return partial result?
+          //TODO change this
           scheduler.sendResultMessage(null, clientKey);
         }
       }
