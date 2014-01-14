@@ -93,9 +93,9 @@ public class TracerouteTask extends MeasurementTask  implements PreemptibleMeasu
 
 		public TracerouteDesc(String key, Date startTime,
 				Date endTime, double intervalSec, long count, long priority, 
-				Map<String, String> params) throws InvalidParameterException {
+				int contextIntervalSec, Map<String, String> params) throws InvalidParameterException {
 			super(TracerouteTask.TYPE, key, startTime, endTime, intervalSec, count, 
-					priority, params);
+					priority, contextIntervalSec, params);
 			initializeParams(params);
 
 			if (target == null || target.length() == 0) {
@@ -196,7 +196,7 @@ public class TracerouteTask extends MeasurementTask  implements PreemptibleMeasu
 
 	public TracerouteTask(MeasurementDesc desc) {
 		super(new TracerouteDesc(desc.key, desc.startTime, desc.endTime, desc.intervalSec,
-				desc.count, desc.priority, desc.parameters));
+				desc.count, desc.priority, desc.contextIntervalSec, desc.parameters));
 		this.duration=Config.TRACEROUTE_TASK_DURATION;
 		this.taskProgress=TaskProgress.FAILED;
 		this.stopFlag=false;
@@ -250,7 +250,7 @@ public class TracerouteTask extends MeasurementTask  implements PreemptibleMeasu
 	public MeasurementTask clone() {
 		MeasurementDesc desc = this.measurementDesc;
 		TracerouteDesc newDesc = new TracerouteDesc(desc.key, desc.startTime, desc.endTime, 
-				desc.intervalSec, desc.count, desc.priority, desc.parameters);
+				desc.intervalSec, desc.count, desc.priority, desc.contextIntervalSec, desc.parameters);
 		return new TracerouteTask(newDesc);
 	}
 

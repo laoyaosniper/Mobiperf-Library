@@ -32,6 +32,7 @@ public abstract class MeasurementDesc implements Parcelable{
   public long count;
   public long priority;
   public Map<String, String> parameters;
+  public int contextIntervalSec;
 
   /**
    * @param type Type of measurement (ping, dns, traceroute, etc.) 
@@ -51,7 +52,7 @@ public abstract class MeasurementDesc implements Parcelable{
    * @param params Measurement parameters Measurement parameters.
    */
   protected MeasurementDesc(String type, String key, Date startTime, 
-                            Date endTime, double intervalSec, long count, long priority,
+                            Date endTime, double intervalSec, long count, long priority, int contextIntervalSec,
                             Map<String, String> params ) {
     super();
     this.type = type;
@@ -65,6 +66,7 @@ public abstract class MeasurementDesc implements Parcelable{
     if (endTime == null || 
         endTime.getTime() - now > Config.TASK_EXPIRATION_MSEC) {
       this.endTime = new Date(now + Config.TASK_EXPIRATION_MSEC);
+      //TODO (Ashkan) check Hongyi suggestion
 //      /** Hongyi: Task expiration time seems too long so no preemption 
 //       * will be performed. Change to specific task duration
 //       */
@@ -90,6 +92,12 @@ public abstract class MeasurementDesc implements Parcelable{
     this.count = count;
     this.priority = priority;
     this.parameters = params;
+    
+    if (contextIntervalSec<=0){
+    	this.intervalSec = Config.DEFAULT_SYSTEM_CONTEXT_COLLECTION_INTERVAL_SEC;
+    }else{
+    	this.contextIntervalSec=contextIntervalSec;
+    }
   }
 
   /** Return the type of the measurement (DNS, Ping, Traceroute, etc.)*/
@@ -115,6 +123,7 @@ public abstract class MeasurementDesc implements Parcelable{
         this.intervalSec==another.intervalSec &&
         this.count==another.count &&
         this.priority==another.priority&&
+        this.contextIntervalSec==another.contextIntervalSec&&
         this.parameters.equals(another.parameters)){
 
       return true;
@@ -132,6 +141,7 @@ public abstract class MeasurementDesc implements Parcelable{
     intervalSec = in.readDouble();
     count = in.readLong();
     priority = in.readLong();
+    contextIntervalSec=in.readInt();
     //      in.readMap(parameters, loader);
     parameters = in.readHashMap(loader);
   }
@@ -150,6 +160,7 @@ public abstract class MeasurementDesc implements Parcelable{
     dest.writeDouble(intervalSec);
     dest.writeLong(count);
     dest.writeLong(priority);
+    dest.writeInt(contextIntervalSec);
     dest.writeMap(parameters);
   }
 }

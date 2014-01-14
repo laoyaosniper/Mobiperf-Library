@@ -87,7 +87,7 @@ public class MainActivity extends Activity {
             endTime = new Date(System.currentTimeMillis() + 5000L);
             taskparam = new TaskParams(taskType, "mykey1"
               , Calendar.getInstance().getTime(), endTime, 120, 1
-              , priority, params);
+              , priority, 1, params);
             realTaskParams.add(taskparam);
             
             taskType = TaskParams.DNSLookup;
@@ -95,13 +95,13 @@ public class MainActivity extends Activity {
             endTime = new Date(System.currentTimeMillis() + 5000L);
             taskparam = new TaskParams(taskType, "mykey1"
               , Calendar.getInstance().getTime(), endTime, 120, 1
-              , priority, params);
+              , priority, 1, params);
             realTaskParams.add(taskparam);
             
             taskType = TaskParams.Sequential;
             taskparam = new TaskParams(taskType, "mykey1"
               , Calendar.getInstance().getTime(), endTime, 120, 1
-              , priority, params);
+              , priority, 1, params);
             lastLocalId = libraryAPI.addMultipleTasks(taskparam, realTaskParams);
             break;  
           case 1:
@@ -110,7 +110,7 @@ public class MainActivity extends Activity {
             priority = MeasurementTask.INVALID_PRIORITY;
             taskparam = new TaskParams(taskType, "mykey1"
               , Calendar.getInstance().getTime(), endTime, 120, 1
-              , priority, params);
+              , priority, 1,  params);
             realTaskParams.add(taskparam);
             
             taskType = TaskParams.Ping;
@@ -118,13 +118,13 @@ public class MainActivity extends Activity {
             endTime = new Date(System.currentTimeMillis() + 5000L);
             taskparam = new TaskParams(taskType, "mykey1"
               , Calendar.getInstance().getTime(), endTime, 120, 1
-              , priority, params);
+              , priority, 1, params);
             realTaskParams.add(taskparam);
             
             taskType = TaskParams.Parallel;
             taskparam = new TaskParams(taskType, "mykey1"
               , Calendar.getInstance().getTime(), endTime, 120, 1
-              , priority, params);
+              , priority, 1, params);
             lastLocalId = libraryAPI.addMultipleTasks(taskparam, realTaskParams);
             
 //            try {
@@ -142,7 +142,7 @@ public class MainActivity extends Activity {
           endTime = new Date(System.currentTimeMillis() + 5000L);
           taskparam = new TaskParams(taskType, "mykey1"
             , Calendar.getInstance().getTime(), endTime, 120, 1
-            , priority, params);
+            , priority, 1, params);
           lastLocalId = libraryAPI.addTask(taskparam);
           break;         
           case 3:
@@ -155,7 +155,7 @@ public class MainActivity extends Activity {
             endTime = new Date(System.currentTimeMillis() + 5000L);
             taskparam = new TaskParams(taskType, "mykey1"
               , Calendar.getInstance().getTime(), endTime, 120, 1
-              , priority, params);
+              , priority, 1, params);
             lastLocalId = libraryAPI.addTask(taskparam);
             break;
         }

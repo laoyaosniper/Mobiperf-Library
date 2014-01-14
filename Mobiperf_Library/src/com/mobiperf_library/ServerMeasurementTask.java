@@ -15,6 +15,8 @@
 package com.mobiperf_library;
 
 import java.util.Calendar;
+import java.util.Map;
+import java.util.Vector;
 import java.util.concurrent.Callable;
 
 import android.content.Intent;
@@ -30,9 +32,11 @@ import com.mobiperf_library.util.PhoneUtils;
 public class ServerMeasurementTask implements Callable<MeasurementResult []> {
   private MeasurementTask realTask;
   private MeasurementScheduler scheduler;
+  private ContextCollector contextCollector;
   public ServerMeasurementTask(MeasurementTask task, MeasurementScheduler scheduler) {
     realTask = task;
     this.scheduler = scheduler;
+    this.contextCollector= new ContextCollector();
   }
 
   private void broadcastMeasurementStart() {
@@ -104,7 +108,12 @@ public class ServerMeasurementTask implements Callable<MeasurementResult []> {
       //        MeasurementScheduler.this.setCurrentTask(realTask);
       broadcastMeasurementStart();
       try {
-        results = realTask.call(); 
+    	contextCollector.setInterval(realTask.getDescription().contextIntervalSec);
+        contextCollector.startCollector();
+        results = realTask.call();
+        Vector<Map<String, Object>> contextResults=contextCollector.stopCollector();
+        //TODO attach the results to the MeasurementResults
+        
         for(MeasurementResult r: results){
           broadcastMeasurementEnd(r, null, realTask.measurementDesc.key);
         }

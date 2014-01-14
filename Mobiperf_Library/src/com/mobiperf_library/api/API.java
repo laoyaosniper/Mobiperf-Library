@@ -246,25 +246,25 @@ public abstract class API {
       case TaskParams.DNSLookup:
         data.putParcelable("measurementDesc", new DnsLookupDesc(
           taskParams.key, taskParams.startTime, taskParams.endTime
-          , taskParams.intervalSec, taskParams.count, taskParams.priority
+          , taskParams.intervalSec, taskParams.count, taskParams.priority, taskParams.contextIntervalSec
           , taskParams.params ));
         break;
       case TaskParams.HTTP:
         data.putParcelable("measurementDesc", new HttpDesc(
           taskParams.key, taskParams.startTime, taskParams.endTime
-          , taskParams.intervalSec, taskParams.count, taskParams.priority
+          , taskParams.intervalSec, taskParams.count, taskParams.priority, taskParams.contextIntervalSec
           , taskParams.params ));
         break;
       case TaskParams.Ping:
         data.putParcelable("measurementDesc", new PingDesc(
           taskParams.key, taskParams.startTime, taskParams.endTime
-          , taskParams.intervalSec, taskParams.count, taskParams.priority
+          , taskParams.intervalSec, taskParams.count, taskParams.priority, taskParams.contextIntervalSec
           , taskParams.params ));
         break;
       case TaskParams.Traceroute:
         data.putParcelable("measurementDesc", new TracerouteDesc(
           taskParams.key, taskParams.startTime, taskParams.endTime
-          , taskParams.intervalSec, taskParams.count, taskParams.priority
+          , taskParams.intervalSec, taskParams.count, taskParams.priority, taskParams.contextIntervalSec
           , taskParams.params ));
         break;
       default:
@@ -280,25 +280,25 @@ public abstract class API {
       case TaskParams.DNSLookup:
         data.putParcelable("measurementTask", new DnsLookupTask(new DnsLookupDesc(
           taskParams.key, taskParams.startTime, taskParams.endTime
-          , taskParams.intervalSec, taskParams.count, taskParams.priority
+          , taskParams.intervalSec, taskParams.count, taskParams.priority, taskParams.contextIntervalSec
           , taskParams.params )));
         break;
       case TaskParams.HTTP:
         data.putParcelable("measurementTask", new HttpTask(new HttpDesc(
           taskParams.key, taskParams.startTime, taskParams.endTime
-          , taskParams.intervalSec, taskParams.count, taskParams.priority
+          , taskParams.intervalSec, taskParams.count, taskParams.priority, taskParams.contextIntervalSec
           , taskParams.params )));
         break;
       case TaskParams.Ping:
         data.putParcelable("measurementTask", new PingTask(new PingDesc(
           taskParams.key, taskParams.startTime, taskParams.endTime
-          , taskParams.intervalSec, taskParams.count, taskParams.priority
+          , taskParams.intervalSec, taskParams.count, taskParams.priority, taskParams.contextIntervalSec
           , taskParams.params )));
         break;
       case TaskParams.Traceroute:
         data.putParcelable("measurementTask", new TracerouteTask(new TracerouteDesc(
           taskParams.key, taskParams.startTime, taskParams.endTime
-          , taskParams.intervalSec, taskParams.count, taskParams.priority
+          , taskParams.intervalSec, taskParams.count, taskParams.priority, taskParams.contextIntervalSec
           , taskParams.params )));
         break;
       default:
@@ -317,25 +317,25 @@ public abstract class API {
         case TaskParams.DNSLookup:
           task = new DnsLookupTask(new DnsLookupDesc(
             param.key, param.startTime, param.endTime
-            , param.intervalSec, param.count, param.priority
+            , param.intervalSec, param.count, param.priority, param.contextIntervalSec
             , param.params ));
           break;
         case TaskParams.HTTP:
           task = new HttpTask(new HttpDesc(
             param.key, param.startTime, param.endTime
-            , param.intervalSec, param.count, param.priority
+            , param.intervalSec, param.count, param.priority, param.contextIntervalSec
             , param.params ));
           break;
         case TaskParams.Ping:
           task = new PingTask(new PingDesc(
             param.key, param.startTime, param.endTime
-            , param.intervalSec, param.count, param.priority
+            , param.intervalSec, param.count, param.priority, param.contextIntervalSec
             , param.params ));
           break;
         case TaskParams.Traceroute:
           task = new TracerouteTask(new TracerouteDesc(
             param.key, param.startTime, param.endTime
-            , param.intervalSec, param.count, param.priority
+            , param.intervalSec, param.count, param.priority, param.contextIntervalSec
             , param.params ));
           break;
         default:
@@ -347,13 +347,13 @@ public abstract class API {
       case TaskParams.Parallel:
         data.putParcelable("measurementTask", new ParallelTask(new ParallelDesc(
           taskParam.key, taskParam.startTime, taskParam.endTime
-          , taskParam.intervalSec, taskParam.count, taskParam.priority
+          , taskParam.intervalSec, taskParam.count, taskParam.priority, taskParam.contextIntervalSec
           , taskParam.params ), realTasks));
         break;
       case TaskParams.Sequential:
         data.putParcelable("measurementTask", new SequentialTask(new SequentialDesc(
           taskParam.key, taskParam.startTime, taskParam.endTime
-          , taskParam.intervalSec, taskParam.count, taskParam.priority
+          , taskParam.intervalSec, taskParam.count, taskParam.priority, taskParam.contextIntervalSec
           , taskParam.params ), realTasks));
         break;
     }

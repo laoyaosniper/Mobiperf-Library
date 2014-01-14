@@ -41,10 +41,10 @@ public class ParallelTask extends MeasurementTask{
   public static class ParallelDesc extends MeasurementDesc {     
 
     public ParallelDesc(String key, Date startTime,
-                        Date endTime, double intervalSec, long count, long priority, 
+                        Date endTime, double intervalSec, long count, long priority, int contextIntervalSec,  
                         Map<String, String> params) throws InvalidParameterException {
       super(ParallelTask.TYPE, key, startTime, endTime, intervalSec, count,
-        priority, params);  
+        priority, contextIntervalSec, params);  
       //      initializeParams(params);
 
     }
@@ -94,7 +94,7 @@ public class ParallelTask extends MeasurementTask{
 
   public ParallelTask(MeasurementDesc desc,  ArrayList<MeasurementTask> tasks) {
     super(new ParallelDesc(desc.key, desc.startTime, desc.endTime, desc.intervalSec,
-      desc.count, desc.priority, desc.parameters));
+      desc.count, desc.priority, desc.contextIntervalSec, desc.parameters));
     this.tasks=(List<MeasurementTask>) tasks.clone();
     executor=Executors.newFixedThreadPool(this.tasks.size());
     long maxduration=0;
@@ -194,7 +194,7 @@ public class ParallelTask extends MeasurementTask{
   public MeasurementTask clone() {
     MeasurementDesc desc = this.measurementDesc;
     ParallelDesc newDesc = new ParallelDesc(desc.key, desc.startTime, desc.endTime, 
-      desc.intervalSec, desc.count, desc.priority, desc.parameters);
+      desc.intervalSec, desc.count, desc.priority, desc.contextIntervalSec, desc.parameters);
     ArrayList<MeasurementTask> newTaskList=new ArrayList<MeasurementTask>();
     for(MeasurementTask mt: tasks){
       newTaskList.add(mt.clone());

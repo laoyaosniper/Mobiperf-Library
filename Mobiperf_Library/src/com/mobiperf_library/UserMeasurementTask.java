@@ -15,6 +15,8 @@
 package com.mobiperf_library;
 
 import java.util.Calendar;
+import java.util.Map;
+import java.util.Vector;
 import java.util.concurrent.Callable;
 
 import android.content.Intent;
@@ -25,12 +27,14 @@ import com.mobiperf_library.util.Logger;
 import com.mobiperf_library.util.PhoneUtils;
 
 public class UserMeasurementTask implements Callable<MeasurementResult[]> {
-  MeasurementTask realTask;
-  MeasurementScheduler scheduler;
+  private MeasurementTask realTask;
+  private MeasurementScheduler scheduler;
+  private ContextCollector contextCollector;
 
   public UserMeasurementTask(MeasurementTask task, MeasurementScheduler scheduler) {
     realTask = task;
     this.scheduler = scheduler;  
+    this.contextCollector= new ContextCollector();
   }
 
   private void broadcastMeasurementStart() {
@@ -98,8 +102,13 @@ public class UserMeasurementTask implements Callable<MeasurementResult[]> {
       PhoneUtils.getPhoneUtils().acquireWakeLock();
       //        setCurrentTask(realTask);
       broadcastMeasurementStart();
+      contextCollector.setInterval(realTask.getDescription().contextIntervalSec);
+      contextCollector.startCollector();
       results = realTask.call();
-      // Hongyi: better to catch exception in the same way of ServerMeasurement
+      Vector<Map<String, Object>> contextResults=contextCollector.stopCollector();
+      //TODO attach the results to the MeasurementResults 
+      
+      //TODO (Hongyi): better to catch exception in the same way of ServerMeasurement
       // otherwise iterating results may cause null pointer exception
       for(MeasurementResult r: results){
         broadcastMeasurementEnd(r,realTask.measurementDesc.key, realTask.generateTaskID());

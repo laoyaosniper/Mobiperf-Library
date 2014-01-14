@@ -42,10 +42,10 @@ public class SequentialTask extends MeasurementTask{
   public static class SequentialDesc extends MeasurementDesc {     
 
     public SequentialDesc(String key, Date startTime,
-                          Date endTime, double intervalSec, long count, long priority, 
+                          Date endTime, double intervalSec, long count, long priority, int contextIntervalSec,
                           Map<String, String> params) throws InvalidParameterException {
       super(SequentialTask.TYPE, key, startTime, endTime, intervalSec, count,
-        priority, params);  
+        priority, contextIntervalSec, params);  
       //      initializeParams(params);
 
     }
@@ -69,7 +69,7 @@ public class SequentialTask extends MeasurementTask{
 
   public SequentialTask(MeasurementDesc desc, ArrayList<MeasurementTask> tasks) {
     super(new SequentialDesc(desc.key, desc.startTime, desc.endTime, desc.intervalSec,
-      desc.count, desc.priority, desc.parameters));
+      desc.count, desc.priority, desc.contextIntervalSec, desc.parameters));
     this.tasks=(List<MeasurementTask>) tasks.clone();
     executor=Executors.newSingleThreadExecutor();
     long totalduration=0;
@@ -175,7 +175,7 @@ public class SequentialTask extends MeasurementTask{
   public MeasurementTask clone() {
     MeasurementDesc desc = this.measurementDesc;
     SequentialDesc newDesc = new SequentialDesc(desc.key, desc.startTime, desc.endTime, 
-      desc.intervalSec, desc.count, desc.priority, desc.parameters);
+      desc.intervalSec, desc.count, desc.priority, desc.contextIntervalSec, desc.parameters);
     ArrayList<MeasurementTask> newTaskList=new ArrayList<MeasurementTask>();
     for(MeasurementTask mt: tasks){
       newTaskList.add(mt.clone());
