@@ -102,11 +102,6 @@ public void addContextResults(ArrayList<HashMap<String, String>> contextResults)
     this.contextResults=(ArrayList<HashMap<String, String>>) contextResults.clone();
   }
   
-  /* Returns the type of this result */ 
-  public String getType() {
-    return measurementDesc.getType();
-  }
-
    private static String getStackTrace(Throwable error) {
     final Writer result = new StringWriter();
     final PrintWriter printWriter = new PrintWriter(result);
