@@ -77,6 +77,7 @@ public class MainActivity extends Activity {
         int priority = MeasurementTask.USER_PRIORITY;
         Date endTime = null;
         TaskParams taskparam;
+        int contextIntervalSec = 1;
         ArrayList<TaskParams> realTaskParams = new ArrayList<TaskParams>();
         switch (counter % 5) {   
           case 0:
@@ -90,7 +91,7 @@ public class MainActivity extends Activity {
           priority = MeasurementTask.INVALID_PRIORITY;
           taskparam = new TaskParams(taskType, "mykey1"
             , Calendar.getInstance().getTime(), endTime, 120, 1
-            , priority, params);
+            , priority, contextIntervalSec, params);
           lastLocalId = libraryAPI.addTask(taskparam);
           break;
           case 1:
@@ -103,7 +104,7 @@ public class MainActivity extends Activity {
           endTime = new Date(System.currentTimeMillis() + 5000L);
           taskparam = new TaskParams(taskType, "mykey1"
             , Calendar.getInstance().getTime(), endTime, 120, 1
-            , priority, params);
+            , priority, contextIntervalSec, params);
           lastLocalId = libraryAPI.addTask(taskparam);
           break;
           case 2:

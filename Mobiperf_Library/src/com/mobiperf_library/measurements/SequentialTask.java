@@ -172,7 +172,7 @@ public class SequentialTask extends MeasurementTask{
       }
 
     } catch (InterruptedException e) {
-      Logger.e("Sequential task " + tasks.getTaskId() + " got interrupted!");
+      Logger.e("Sequential task " + this.getTaskId() + " got interrupted!");
     }catch (ExecutionException e) {
       throw new MeasurementError("Execution error: " + e.getCause());
     }

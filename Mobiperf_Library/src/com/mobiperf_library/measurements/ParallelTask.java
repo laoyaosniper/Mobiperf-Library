@@ -172,7 +172,7 @@ public class ParallelTask extends MeasurementTask{
       }
 
     } catch (InterruptedException e) {
-      Logger.e("Parallel task " + this.getTaskID()+" got interrupted");
+      Logger.e("Parallel task " + this.getTaskId()+" got interrupted");
     }catch (ExecutionException e) {
       throw new MeasurementError("Execution error: " + e.getCause());
     }
