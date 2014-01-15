@@ -76,8 +76,35 @@ public class MainActivity extends Activity {
         Date endTime = null;
         TaskParams taskparam;
         ArrayList<TaskParams> realTaskParams = new ArrayList<TaskParams>();
-        switch (counter % 4) {          
+        switch (counter % 5) {   
           case 0:
+//          try {
+//            libraryAPI.cancelTask(lastLocalId);
+//          } catch (Exception e) {
+//          }
+          taskType = TaskParams.DNSLookup;
+          params.put("target","www.google.com");
+          endTime = new Date(System.currentTimeMillis() + 5000L);
+          priority = MeasurementTask.INVALID_PRIORITY;
+          taskparam = new TaskParams(taskType, "mykey1"
+            , Calendar.getInstance().getTime(), endTime, 120, 1
+            , priority, params);
+          lastLocalId = libraryAPI.addTask(taskparam);
+          break;
+          case 1:
+//          try {
+//            libraryAPI.cancelTask(lastLocalId);
+//          } catch (Exception e) {
+//          }
+          taskType = TaskParams.DNSLookup;
+          params.put("target","www.google.com");
+          endTime = new Date(System.currentTimeMillis() + 5000L);
+          taskparam = new TaskParams(taskType, "mykey1"
+            , Calendar.getInstance().getTime(), endTime, 120, 1
+            , priority, params);
+          lastLocalId = libraryAPI.addTask(taskparam);
+          break;
+          case 2:
 //            try {
 //              libraryAPI.cancelTask(lastLocalId);
 //            } catch (Exception e) {
@@ -104,7 +131,7 @@ public class MainActivity extends Activity {
               , priority, params);
             lastLocalId = libraryAPI.addMultipleTasks(taskparam, realTaskParams);
             break;  
-          case 1:
+          case 3:
             taskType = TaskParams.Traceroute;
             params.put("target","www.google.com");
             priority = MeasurementTask.INVALID_PRIORITY;
@@ -132,7 +159,7 @@ public class MainActivity extends Activity {
 //            } catch (Exception e) {
 //            }
             break;   
-          case 2:
+          case 4:
 //          try {
 //            libraryAPI.cancelTask(lastLocalId);
 //          } catch (Exception e) {
@@ -145,19 +172,6 @@ public class MainActivity extends Activity {
             , priority, params);
           lastLocalId = libraryAPI.addTask(taskparam);
           break;         
-          case 3:
-//            try {
-//              libraryAPI.cancelTask(lastLocalId);
-//            } catch (Exception e) {
-//            }
-            taskType = TaskParams.DNSLookup;
-            params.put("target","www.google.com");
-            endTime = new Date(System.currentTimeMillis() + 5000L);
-            taskparam = new TaskParams(taskType, "mykey1"
-              , Calendar.getInstance().getTime(), endTime, 120, 1
-              , priority, params);
-            lastLocalId = libraryAPI.addTask(taskparam);
-            break;
         }
 //        TaskParams taskparam = new TaskParams(taskType, "mykey1"
 //          , Calendar.getInstance().getTime(), endTime, 120, 1

@@ -123,6 +123,7 @@ public abstract class API {
         case Config.MSG_SEND_RESULT:
           result = data.getParcelable("result");
           
+          
           taskId = data.getString("taskId");
           //Toast.makeText(parent, "Got TaskId " + taskId + ", corresponding local Id is " + globalToLocalMap.get(taskId), Toast.LENGTH_SHORT).show();
           localToGlobalMap.remove(globalToLocalMap.get(taskId));
@@ -312,6 +313,7 @@ public abstract class API {
     Bundle data = new Bundle();
     ArrayList<MeasurementTask> realTasks = new ArrayList<MeasurementTask>();
     for ( TaskParams param : realTaskParams) {
+      param.key = uniqueKey;
       MeasurementTask task = null;
       switch ( param.taskType ) {
         case TaskParams.DNSLookup:

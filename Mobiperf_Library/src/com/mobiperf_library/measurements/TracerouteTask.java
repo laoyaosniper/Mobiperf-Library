@@ -377,7 +377,7 @@ public class TracerouteTask extends MeasurementTask  implements PreemptibleMeasu
             PhoneUtils phoneUtils = PhoneUtils.getPhoneUtils();
             result = new MeasurementResult(phoneUtils.getDeviceInfo().deviceId, 
               phoneUtils.getDeviceProperty(), TracerouteTask.TYPE, 
-              System.currentTimeMillis() * 1000, taskProgress, this.measurementDesc);
+              System.currentTimeMillis() * 1000, taskProgress, this.measurementDesc, taskId);
             result.addResult("num_hops", ttl);
             for (int i = 0; i < hopHosts.size(); i++) {
               HopInfo hopInfo = hopHosts.get(i);
@@ -421,7 +421,7 @@ public class TracerouteTask extends MeasurementTask  implements PreemptibleMeasu
       //          System.currentTimeMillis() * 1000, taskProgress, this.measurementDesc);
       result = new MeasurementResult(phoneUtils.getDeviceInfo().deviceId,//TODO null? 
         null, TracerouteTask.TYPE, 
-        System.currentTimeMillis() * 1000, taskProgress, this.measurementDesc);
+        System.currentTimeMillis() * 1000, taskProgress, this.measurementDesc, taskId);
       Logger.i(MeasurementJsonConvertor.toJsonString(result));
       MeasurementResult[] mrArray= new MeasurementResult[1];
       mrArray[0]=result;
@@ -440,7 +440,7 @@ public class TracerouteTask extends MeasurementTask  implements PreemptibleMeasu
       //          System.currentTimeMillis() * 1000, taskProgress, this.measurementDesc);
       result = new MeasurementResult(phoneUtils.getDeviceInfo().deviceId,//TODO null? 
         null, TracerouteTask.TYPE, 
-        System.currentTimeMillis() * 1000, taskProgress, this.measurementDesc);
+        System.currentTimeMillis() * 1000, taskProgress, this.measurementDesc, taskId);
       Logger.i(MeasurementJsonConvertor.toJsonString(result));
       MeasurementResult[] mrArray= new MeasurementResult[1];
       mrArray[0]=result;

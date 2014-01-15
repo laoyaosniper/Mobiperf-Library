@@ -322,7 +322,7 @@ public class HttpTask extends MeasurementTask {
 
       MeasurementResult result = new MeasurementResult(phoneUtils.getDeviceInfo().deviceId,
         phoneUtils.getDeviceProperty(), HttpTask.TYPE, System.currentTimeMillis() * 1000,
-        taskProgress, this.measurementDesc);
+        taskProgress, this.measurementDesc, taskId);
 
       result.addResult("code", statusCode);
 

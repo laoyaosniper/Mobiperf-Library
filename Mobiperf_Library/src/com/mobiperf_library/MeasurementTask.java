@@ -2,6 +2,9 @@ package com.mobiperf_library;
 
 
 import java.io.InvalidClassException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.io.Writer;
 import java.math.BigInteger;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
@@ -10,6 +13,7 @@ import java.util.HashMap;
 import java.util.Set;
 import java.util.concurrent.Callable;
 
+import com.mobiperf_library.MeasurementResult.TaskProgress;
 import com.mobiperf_library.exceptions.MeasurementError;
 import com.mobiperf_library.measurements.DnsLookupTask;
 import com.mobiperf_library.measurements.HttpTask;
@@ -17,6 +21,7 @@ import com.mobiperf_library.measurements.PingTask;
 import com.mobiperf_library.measurements.TestTask;
 import com.mobiperf_library.measurements.TracerouteTask;
 import com.mobiperf_library.util.Logger;
+import com.mobiperf_library.util.PhoneUtils;
 import com.mobiperf_library.util.Util;
 
 import android.content.Context;
@@ -25,6 +30,7 @@ import android.os.Parcelable;
 
 public abstract class MeasurementTask implements Callable<MeasurementResult[]>, Comparable, Parcelable {
   protected MeasurementDesc measurementDesc;
+  protected String taskId;
   //  protected Context parent;
 
 
@@ -58,9 +64,10 @@ public abstract class MeasurementTask implements Callable<MeasurementResult[]>, 
   protected MeasurementTask(MeasurementDesc measurementDesc/*, Context parent*/) {
     super();
     this.measurementDesc = measurementDesc;
+    generateTaskID();
     //    this.parent = parent;
   }
-
+  
   /* Compare priority as the first order. Then compare start time.*/
   @Override
   public int compareTo(Object t) {
@@ -130,6 +137,10 @@ public abstract class MeasurementTask implements Callable<MeasurementResult[]>, 
         + "subclasses of MeasurementTask.");
   }
 
+  public String getTaskId() {
+    return taskId;
+  }
+  
   /**
    * Returns a brief human-readable descriptor of the task.
    */
@@ -163,7 +174,6 @@ public abstract class MeasurementTask implements Callable<MeasurementResult[]>, 
 
   public abstract long getDuration();
   public abstract void setDuration( long newDuration);
-
 
 
   @Override
@@ -204,29 +214,18 @@ public abstract class MeasurementTask implements Callable<MeasurementResult[]>, 
 
   }
 
-  public String generateTaskID(){
-    //    String taskstr=getMeasurementType()+this.measurementDesc.key+this.measurementDesc.startTime+this.measurementDesc.endTime+
-    //        this.measurementDesc.intervalSec+this.measurementDesc.count+this.measurementDesc.priority;
-    //    Object [] keys=this.measurementDesc.parameters.keySet().toArray();
-    //    Arrays.sort(keys);
-    //    for(Object k : keys){
-    //      taskstr+=k+this.measurementDesc.parameters.get((String)k);
-    //    }
-    //    BigInteger bigInt=null;
-    //    try {
-    //      bigInt=Util.getMD5(taskstr);
-    //    } catch (NoSuchAlgorithmException e) {
-    //      Logger.e("Error in getting the MD5 hash");
-    //      return null;
-    //    }
-    //    return bigInt.toString();
-    return this.hashCode()+"";
-
+  /**
+   * Hongyi: change this method to return void. Now it only generate the taskId
+   * and the scheduler uses getTaskId() to get it
+   */
+  public void generateTaskID() {
+    taskId = this.hashCode()+"";
   }
   
   protected MeasurementTask(Parcel in) {
     ClassLoader loader = Thread.currentThread().getContextClassLoader();
     measurementDesc = in.readParcelable(loader);
+    taskId = in.readString();
   }
 
   @Override
@@ -237,6 +236,7 @@ public abstract class MeasurementTask implements Callable<MeasurementResult[]>, 
   @Override
   public void writeToParcel(Parcel dest, int flags) {
     dest.writeParcelable(measurementDesc, flags);
+    dest.writeString(taskId);
   }
   
 }

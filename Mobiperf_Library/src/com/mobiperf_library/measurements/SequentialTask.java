@@ -20,6 +20,7 @@ import com.mobiperf_library.MeasurementDesc;
 import com.mobiperf_library.MeasurementResult;
 import com.mobiperf_library.MeasurementTask;
 import com.mobiperf_library.exceptions.MeasurementError;
+import com.mobiperf_library.measurements.ParallelTask.ParallelDesc;
 import com.mobiperf_library.util.Logger;
 
 import android.content.Context;
@@ -58,6 +59,31 @@ public class SequentialTask extends MeasurementTask{
     public String getType() {
       return SequentialTask.TYPE;
     }  
+    
+    protected SequentialDesc(Parcel in) {
+      super(in);
+    }
+
+    public static final Parcelable.Creator<SequentialDesc> CREATOR
+    = new Parcelable.Creator<SequentialDesc>() {
+      public SequentialDesc createFromParcel(Parcel in) {
+        return new SequentialDesc(in);
+      }
+
+      public SequentialDesc[] newArray(int size) {
+        return new SequentialDesc[size];
+      }
+    };
+
+    @Override
+    public int describeContents() {
+      return super.describeContents();
+    }
+
+    @Override
+    public void writeToParcel(Parcel dest, int flags) {
+      super.writeToParcel(dest, flags);
+    }
   }
 
   @SuppressWarnings("rawtypes")
@@ -137,6 +163,8 @@ public class SequentialTask extends MeasurementTask{
         try {
           r = f.get(mt.getDuration()==0?Config.DEFAULT_TASK_DURATION_TIMEOUT*2:mt.getDuration()*2,TimeUnit.MILLISECONDS);
           for(int i=0;i<r.length;i++){//TODO
+            // Hongyi: change taskId
+            r[i].setTaskId(taskId);
             allresults.add(r[i]);
           }
         } catch (TimeoutException e) {
@@ -146,11 +174,9 @@ public class SequentialTask extends MeasurementTask{
       }
 
     } catch (InterruptedException e) {
-      //TODO
-      e.printStackTrace();
+      throw new MeasurementError("Parallel task get interrupted! " + e.getMessage());
     }catch (ExecutionException e) {
-      //TODO
-      e.printStackTrace();
+      throw new MeasurementError("Execution error: " + e.getMessage());
     }
     finally{
       executor.shutdown();
@@ -202,4 +228,7 @@ public class SequentialTask extends MeasurementTask{
     }
   }
 
+  public MeasurementTask[] getTasks() {
+    return tasks.toArray(new MeasurementTask[tasks.size()]);
+  }
 }

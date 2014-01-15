@@ -14,47 +14,55 @@
  */
 package com.mobiperf_library;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.io.Writer;
+import java.util.Formatter;
+import java.util.HashMap;
+
 import android.os.Parcel;
 import android.os.Parcelable;
 import android.util.StringBuilderPrinter;
 
-
-import java.util.Formatter;
-import java.util.HashMap;
-
 import com.mobiperf_library.measurements.DnsLookupTask;
+import com.mobiperf_library.measurements.ParallelTask;
 import com.mobiperf_library.measurements.DnsLookupTask.DnsLookupDesc;
 import com.mobiperf_library.measurements.HttpTask;
 import com.mobiperf_library.measurements.HttpTask.HttpDesc;
 import com.mobiperf_library.measurements.PingTask;
 import com.mobiperf_library.measurements.PingTask.PingDesc;
+import com.mobiperf_library.measurements.SequentialTask;
 import com.mobiperf_library.measurements.TracerouteTask;
 import com.mobiperf_library.measurements.TracerouteTask.TracerouteDesc;
 import com.mobiperf_library.util.Logger;
 import com.mobiperf_library.util.MeasurementJsonConvertor;
+import com.mobiperf_library.util.PhoneUtils;
 import com.mobiperf_library.util.Util;
 
 /**
  * POJO that represents the result of a measurement
+ * 
  * @see MeasurementDesc
  */
-public class MeasurementResult implements Parcelable {   
+public class MeasurementResult implements Parcelable {
 
   private String deviceId;
-  private DeviceProperty properties;//TODO needed for sending back the results to server
+  private DeviceProperty properties;// TODO needed for sending back the
+                    // results to server
   private long timestamp;
-//  private boolean success;
-  private String taskKey;//??
+  private boolean success;
+  private String taskKey;// ??
   private String type;
   private TaskProgress taskProgress;
   private MeasurementDesc measurementDesc;
   private HashMap<String, String> values;
+  // Hongyi: add taskId and error string
+  private String taskId;
 
-  
-  public enum TaskProgress {//TODO changing paused to scheduled?
+  public enum TaskProgress {// TODO changing paused to scheduled?
     COMPLETED, PAUSED, FAILED
-  } 
-  
+  }
+
   /**
    * @param deviceProperty
    * @param type
@@ -62,46 +70,104 @@ public class MeasurementResult implements Parcelable {
    * @param success
    * @param measurementDesc
    */
-  public MeasurementResult(String id, DeviceProperty deviceProperty, String type, 
-                           long timeStamp, TaskProgress taskProgress, MeasurementDesc measurementDesc) {
+  public MeasurementResult(String id, DeviceProperty deviceProperty,
+    String type, long timeStamp, TaskProgress taskProgress,
+    MeasurementDesc measurementDesc, String taskId) {
     super();
-    
+
     this.taskKey = measurementDesc.key;
     this.deviceId = id;
     this.type = type;
     this.properties = deviceProperty;
     this.timestamp = timeStamp;
-//    this.success = success;
-    this.taskProgress=taskProgress;
+    this.taskProgress = taskProgress;
+    if (this.taskProgress == TaskProgress.COMPLETED) {
+      this.success = true;
+    } else {
+      this.success = false;
+    }
+
     this.measurementDesc = measurementDesc;
     this.measurementDesc.parameters = measurementDesc.parameters;
     this.values = new HashMap<String, String>();
+    this.taskId = taskId;
   }
- 
-  /* Returns the type of this result */ 
+  
+
+
+  private static String getStackTrace(Throwable error) {
+    final Writer result = new StringWriter();
+    final PrintWriter printWriter = new PrintWriter(result);
+    error.printStackTrace(printWriter);
+    return result.toString();
+  }
+  
+  public static MeasurementResult getFailureResult(MeasurementTask task, Throwable error) {
+    PhoneUtils phoneUtils = PhoneUtils.getPhoneUtils();
+    MeasurementResult result = new MeasurementResult(
+      phoneUtils.getDeviceInfo().deviceId,
+      phoneUtils.getDeviceProperty(),
+      task.getType(),
+      System.currentTimeMillis() * 1000,
+      TaskProgress.FAILED,
+      task.measurementDesc,
+      task.getTaskId());
+    result.addResult("error", error.toString() + "\n" + getStackTrace(error));
+    return result;
+  }
+  
+  public static MeasurementResult[] getFailureResultsWithTaskId(
+       MeasurementTask[] tasks, String taskId, Throwable err) {
+    MeasurementResult[] results = null;
+    if ( tasks != null ) {
+      results = new MeasurementResult[tasks.length];
+      for ( int i = 0; i < tasks.length; i++ ) {
+        results[i] = getFailureResult(tasks[i], err);
+        results[i].setTaskId(taskId);
+      }
+    }
+    return results;
+  }
+  
+  /* Returns the type of this result */
   public String getType() {
     return measurementDesc.getType();
   }
-  
-  public TaskProgress getTaskProgress(){
+
+  public TaskProgress getTaskProgress() {
     return this.taskProgress;
   }
-  
-  public String getTaskKey() {
-      return this.taskKey;
-    }
 
-  /* Add the measurement results of type String into the class */
-  public void addResult(String resultType, Object resultVal) {
-    this.values.put(resultType, MeasurementJsonConvertor.toJsonString(resultVal));
+  public String getTaskKey() {
+    return this.taskKey;
+  }
+
+  public boolean isSucceed() {
+    return this.success;
+  }
+
+  public String getTaskId() {
+    return taskId;
   }
   
-//  public String toString() {
-//    return "TaskKey: " + taskKey + ", Type:" + type + ", Timestamp:" + timestamp
-//        + ", Property:" + properties.isBatteryCharging + ", measurementDesc:" + measurementDesc.intervalSec
-//        + ", DeviceId:" + deviceId;
-//  }
+  public void setTaskId(String taskId) {
+    this.taskId = taskId;
+  }
   
+  /* Add the measurement results of type String into the class */
+  public void addResult(String resultType, Object resultVal) {
+    this.values.put(resultType,
+        MeasurementJsonConvertor.toJsonString(resultVal));
+  }
+
+  // public String toString() {
+  // return "TaskKey: " + taskKey + ", Type:" + type + ", Timestamp:" +
+  // timestamp
+  // + ", Property:" + properties.isBatteryCharging + ", measurementDesc:" +
+  // measurementDesc.intervalSec
+  // + ", DeviceId:" + deviceId;
+  // }
+
   /* Returns a string representation of the result */
   @Override
   public String toString() {
@@ -111,36 +177,67 @@ public class MeasurementResult implements Parcelable {
     try {
       if (type.equals(PingTask.TYPE)) {
         getPingResult(printer, values);
-      }
-      else if (type.equals(HttpTask.TYPE)) {
+      } else if (type.equals(HttpTask.TYPE)) {
         getHttpResult(printer, values);
-      } 
-      else if (type.equals(DnsLookupTask.TYPE)) {
+      } else if (type.equals(DnsLookupTask.TYPE)) {
         getDnsResult(printer, values);
-      }
-      else if (type.equals(TracerouteTask.TYPE)) {
+      } else if (type.equals(TracerouteTask.TYPE)) {
         getTracerouteResult(printer, values);
-      } 
-//      else if (type.equals(UDPBurstTask.TYPE)) {
-//        getUDPBurstResult(printer, values);
-//      } else if (type.equals(TCPThroughputTask.TYPE)) {
-//        getTCPThroughputResult(printer, values);
-//      } 
+      }
+      // else if (type.equals(UDPBurstTask.TYPE)) {
+      // getUDPBurstResult(printer, values);
+      // } else if (type.equals(TCPThroughputTask.TYPE)) {
+      // getTCPThroughputResult(printer, values);
+      // }
+      else if ( type.equals(ParallelTask.TYPE)) {
+        getParallelResult(printer, values);
+      }
+      else if ( type.equals(SequentialTask.TYPE)) {
+        getSequentialResult(printer, values);
+      }
       else {
-        Logger.e("Failed to get results for unknown measurement type " + type);
+        Logger.e("Failed to get results for unknown measurement type "
+            + type);
       }
       return builder.toString();
     } catch (NumberFormatException e) {
-      Logger.e("Exception occurs during constructing result string for user", e);
+      Logger.e(
+          "Exception occurs during constructing result string for user",
+          e);
     } catch (ClassCastException e) {
-      Logger.e("Exception occurs during constructing result string for user", e);
+      Logger.e(
+          "Exception occurs during constructing result string for user",
+          e);
     } catch (Exception e) {
-      Logger.e("Exception occurs during constructing result string for user", e);
+      Logger.e(
+          "Exception occurs during constructing result string for user",
+          e);
     }
     return "Measurement has failed";
   }
-  
-  private void getPingResult(StringBuilderPrinter printer, HashMap<String, String> values) {
+
+  /**
+   * @param printer
+   * @param values2
+   */
+  private void getSequentialResult(StringBuilderPrinter printer,
+      HashMap<String, String> values) {
+    // TODO Auto-generated method stub
+
+  }
+
+  /**
+   * @param printer
+   * @param values2
+   */
+  private void getParallelResult(StringBuilderPrinter printer,
+      HashMap<String, String> values) {
+    // TODO Auto-generated method stub
+
+  }
+
+  private void getPingResult(StringBuilderPrinter printer,
+      HashMap<String, String> values) {
     PingDesc desc = (PingDesc) measurementDesc;
     printer.println("[Ping]");
     printer.println("Target: " + desc.target);
@@ -150,58 +247,72 @@ public class MeasurementResult implements Parcelable {
       ipAddress = "Unknown";
     }
     printer.println("IP address: " + ipAddress);
-    printer.println("Timestamp: " + Util.getTimeStringFromMicrosecond(properties.timestamp));
+    printer.println("Timestamp: "
+        + Util.getTimeStringFromMicrosecond(properties.timestamp));
     printIPTestResult(printer);
-    
-    if (taskProgress==TaskProgress.COMPLETED) {
+
+    if (taskProgress == TaskProgress.COMPLETED) {
       float packetLoss = Float.parseFloat(values.get("packet_loss"));
       int count = Integer.parseInt(values.get("packets_sent"));
-      printer.println("\n" + count + " packets transmitted, " + (int) (count * (1 - packetLoss)) + 
-          " received, " + (packetLoss * 100) + "% packet loss");
+      printer.println("\n" + count + " packets transmitted, "
+          + (int) (count * (1 - packetLoss)) + " received, "
+          + (packetLoss * 100) + "% packet loss");
 
       float value = Float.parseFloat(values.get("mean_rtt_ms"));
       printer.println("Mean RTT: " + String.format("%.1f", value) + " ms");
-    
+
       value = Float.parseFloat(values.get("min_rtt_ms"));
       printer.println("Min RTT:  " + String.format("%.1f", value) + " ms");
-    
+
       value = Float.parseFloat(values.get("max_rtt_ms"));
       printer.println("Max RTT:  " + String.format("%.1f", value) + " ms");
-    
+
       value = Float.parseFloat(values.get("stddev_rtt_ms"));
       printer.println("Std dev:  " + String.format("%.1f", value) + " ms");
+    } else if (taskProgress == TaskProgress.PAUSED) {
+      printer.println("Ping paused!");
     } else {
-      printer.println("Failed");
+      printer.println("Error: " + values.get("error"));
     }
   }
-  
-  private void getHttpResult(StringBuilderPrinter printer, HashMap<String, String> values) {
+
+  private void getHttpResult(StringBuilderPrinter printer,
+      HashMap<String, String> values) {
     HttpDesc desc = (HttpDesc) measurementDesc;
     printer.println("[HTTP]");
     printer.println("URL: " + desc.url);
-    printer.println("Timestamp: " + Util.getTimeStringFromMicrosecond(properties.timestamp));
+    printer.println("Timestamp: "
+        + Util.getTimeStringFromMicrosecond(properties.timestamp));
     printIPTestResult(printer);
-    
-    if (taskProgress==TaskProgress.COMPLETED) {
+
+    if (taskProgress == TaskProgress.COMPLETED) {
       int headerLen = Integer.parseInt(values.get("headers_len"));
       int bodyLen = Integer.parseInt(values.get("body_len"));
       int time = Integer.parseInt(values.get("time_ms"));
       printer.println("");
-      printer.println("Downloaded " + (headerLen + bodyLen) + " bytes in " + time + " ms");
-      printer.println("Bandwidth: " + (headerLen + bodyLen) * 8 / time + " Kbps");
+      printer.println("Downloaded " + (headerLen + bodyLen)
+          + " bytes in " + time + " ms");
+      printer.println("Bandwidth: " + (headerLen + bodyLen) * 8 / time
+          + " Kbps");
+    } else if (taskProgress == TaskProgress.PAUSED) {
+      printer.println("Http paused!");
     } else {
-      printer.println("Download failed, status code " + values.get("code"));
+      printer.println("Http download failed, status code "
+          + values.get("code"));
+      printer.println("Error: " + values.get("error"));
     }
   }
-  
-  private void getDnsResult(StringBuilderPrinter printer, HashMap<String, String> values) {
+
+  private void getDnsResult(StringBuilderPrinter printer,
+      HashMap<String, String> values) {
     DnsLookupDesc desc = (DnsLookupDesc) measurementDesc;
     printer.println("[DNS Lookup]");
     printer.println("Target: " + desc.target);
-    printer.println("Timestamp: " + Util.getTimeStringFromMicrosecond(properties.timestamp));
+    printer.println("Timestamp: "
+        + Util.getTimeStringFromMicrosecond(properties.timestamp));
     printIPTestResult(printer);
-    
-    if (taskProgress==TaskProgress.COMPLETED) {
+
+    if (taskProgress == TaskProgress.COMPLETED) {
       String ipAddress = removeQuotes(values.get("address"));
       if (ipAddress == null) {
         ipAddress = "Unknown";
@@ -209,22 +320,26 @@ public class MeasurementResult implements Parcelable {
       printer.println("\nAddress: " + ipAddress);
       int time = Integer.parseInt(values.get("time_ms"));
       printer.println("Lookup time: " + time + " ms");
+    } else if (taskProgress == TaskProgress.PAUSED) {
+      printer.println("DNS look up paused!");
     } else {
-      printer.println("Failed");
+      printer.println("Error: " + values.get("error"));
     }
   }
-  
-  private void getTracerouteResult(StringBuilderPrinter printer, HashMap<String, String> values) {
+
+  private void getTracerouteResult(StringBuilderPrinter printer,
+      HashMap<String, String> values) {
     TracerouteDesc desc = (TracerouteDesc) measurementDesc;
     printer.println("[Traceroute]");
     printer.println("Target: " + desc.target);
-    printer.println("Timestamp: " + Util.getTimeStringFromMicrosecond(properties.timestamp));
+    printer.println("Timestamp: "
+        + Util.getTimeStringFromMicrosecond(properties.timestamp));
     printIPTestResult(printer);
-    
-    if (taskProgress==TaskProgress.COMPLETED) {
+
+    if (taskProgress == TaskProgress.COMPLETED) {
       // Manually inject a new line
       printer.println(" ");
-    
+
       int hops = Integer.parseInt(values.get("num_hops"));
       int hop_str_len = String.valueOf(hops + 1).length();
       for (int i = 0; i < hops; i++) {
@@ -233,7 +348,7 @@ public class MeasurementResult implements Parcelable {
         if (ipAddress == null) {
           ipAddress = "Unknown";
         }
-        String hop_str = String.valueOf(i+1);
+        String hop_str = String.valueOf(i + 1);
         String hopInfo = hop_str;
         for (int j = 0; j < hop_str_len + 1 - hop_str.length(); ++j) {
           hopInfo += " ";
@@ -243,99 +358,106 @@ public class MeasurementResult implements Parcelable {
         for (int j = 0; j < 16 - ipAddress.length(); ++j) {
           hopInfo += " ";
         }
-      
+
         key = "hop_" + i + "_rtt_ms";
-        // The first and last character of this string are double quotes.
+        // The first and last character of this string are double
+        // quotes.
         String timeStr = removeQuotes(values.get(key));
         if (timeStr == null) {
           timeStr = "Unknown";
         }
-      
+
         float time = Float.parseFloat(timeStr);
         printer.println(hopInfo + String.format("%6.2f", time) + " ms");
       }
+    } else if (taskProgress == TaskProgress.PAUSED) {
+      printer.println("Traceroute paused!");
     } else {
-      printer.println("Failed");
+      printer.println("Error: " + values.get("error"));
     }
   }
-  
-//  private void getUDPBurstResult(StringBuilderPrinter printer, HashMap<String, String> values) {
-//    UDPBurstDesc desc = (UDPBurstDesc) parameters;
-//    if (desc.dirUp) {
-//      printer.println("[UDPBurstUp]");
-//    } else {
-//      printer.println("[UDPBurstDown]");
-//    }
-//    printer.println("Target: " + desc.target);
-//    printer.println("IP addr: " + values.get("target_ip"));
-//    if (success) {
-//      printer.println("PRR: " + values.get("PRR"));
-//      printer.println("Timestamp: " + Util.getTimeStringFromMicrosecond(properties.timestamp));
-//      printIPTestResult(printer);
-//    } else {
-//      printer.println("Failed");
-//    }
-//  }
 
-//  private void getTCPThroughputResult(StringBuilderPrinter printer, 
-//                                      HashMap<String, String> values) {
-//    TCPThroughputDesc desc = (TCPThroughputDesc) parameters;
-//    if (desc.dir_up) {
-//      printer.println("[TCP Uplink]");
-//    } else {
-//      printer.println("[TCP Downlink]");
-//    }
-//    printer.println("Target: " + desc.target);
-//    printer.println("Timestamp: " +
-//        Util.getTimeStringFromMicrosecond(properties.timestamp));
-//    printIPTestResult(printer);
-//    
-//    if (success) {
-//      printer.println("");
-//      // Display result with precision up to 2 digit
-//      String speedInJSON = values.get("tcp_speed_results");
-//      String dataLimitExceedInJSON = values.get("data_limit_exceeded");
-//      String displayResult = "";
-//
-//      double tp = desc.calMedianSpeedFromTCPThroughputOutput(speedInJSON);
-//      double KB = Math.pow(2, 10);
-//      if (tp < 0) {
-//        displayResult = "No results available.";
-//      } else if (tp > KB*KB) {
-//        displayResult = "Speed: " + String.format("%.2f",tp/(KB*KB)) + " Gbps";
-//      } else if (tp > KB ) {
-//        displayResult = "Speed: " + String.format("%.2f",tp/KB) + " Mbps";
-//      } else {
-//        displayResult = "Speed: " + String.format("%.2f", tp) + " Kbps";
-//      }
-//
-//      // Append notice for exceeding data limit
-//      if (dataLimitExceedInJSON.equals("true")) {
-//        displayResult += "\n* Task finishes earlier due to exceeding " +
-//                         "maximum number of "+ ((desc.dir_up) ? "transmitted" : "received") + 
-//                         " bytes";
-//      }
-//      printer.println(displayResult);
-//    } else {
-//      printer.println("Failed");
-//    }
-//  }
-  
+  // private void getUDPBurstResult(StringBuilderPrinter printer,
+  // HashMap<String, String> values) {
+  // UDPBurstDesc desc = (UDPBurstDesc) parameters;
+  // if (desc.dirUp) {
+  // printer.println("[UDPBurstUp]");
+  // } else {
+  // printer.println("[UDPBurstDown]");
+  // }
+  // printer.println("Target: " + desc.target);
+  // printer.println("IP addr: " + values.get("target_ip"));
+  // if (success) {
+  // printer.println("PRR: " + values.get("PRR"));
+  // printer.println("Timestamp: " +
+  // Util.getTimeStringFromMicrosecond(properties.timestamp));
+  // printIPTestResult(printer);
+  // } else {
+  // printer.println("Failed");
+  // }
+  // }
+
+  // private void getTCPThroughputResult(StringBuilderPrinter printer,
+  // HashMap<String, String> values) {
+  // TCPThroughputDesc desc = (TCPThroughputDesc) parameters;
+  // if (desc.dir_up) {
+  // printer.println("[TCP Uplink]");
+  // } else {
+  // printer.println("[TCP Downlink]");
+  // }
+  // printer.println("Target: " + desc.target);
+  // printer.println("Timestamp: " +
+  // Util.getTimeStringFromMicrosecond(properties.timestamp));
+  // printIPTestResult(printer);
+  //
+  // if (success) {
+  // printer.println("");
+  // // Display result with precision up to 2 digit
+  // String speedInJSON = values.get("tcp_speed_results");
+  // String dataLimitExceedInJSON = values.get("data_limit_exceeded");
+  // String displayResult = "";
+  //
+  // double tp = desc.calMedianSpeedFromTCPThroughputOutput(speedInJSON);
+  // double KB = Math.pow(2, 10);
+  // if (tp < 0) {
+  // displayResult = "No results available.";
+  // } else if (tp > KB*KB) {
+  // displayResult = "Speed: " + String.format("%.2f",tp/(KB*KB)) + " Gbps";
+  // } else if (tp > KB ) {
+  // displayResult = "Speed: " + String.format("%.2f",tp/KB) + " Mbps";
+  // } else {
+  // displayResult = "Speed: " + String.format("%.2f", tp) + " Kbps";
+  // }
+  //
+  // // Append notice for exceeding data limit
+  // if (dataLimitExceedInJSON.equals("true")) {
+  // displayResult += "\n* Task finishes earlier due to exceeding " +
+  // "maximum number of "+ ((desc.dir_up) ? "transmitted" : "received") +
+  // " bytes";
+  // }
+  // printer.println(displayResult);
+  // } else {
+  // printer.println("Failed");
+  // }
+  // }
+
   /**
-   * Removes the quotes surrounding the string. If |str| is null, returns null.
+   * Removes the quotes surrounding the string. If |str| is null, returns
+   * null.
    */
   private String removeQuotes(String str) {
     return str != null ? str.replaceAll("^\"|\"", "") : null;
   }
-  
+
   /**
    * Print ip connectivity and hostname resolvability result
    */
-  private void printIPTestResult (StringBuilderPrinter printer) {
+  private void printIPTestResult(StringBuilderPrinter printer) {
     printer.println("IPv4/IPv6 Connectivity: " + properties.ipConnectivity);
-    printer.println("IPv4/IPv6 Domain Name Resolvability: " 
-                    + properties.dnResolvability);
+    printer.println("IPv4/IPv6 Domain Name Resolvability: "
+        + properties.dnResolvability);
   }
+
   /** Necessary function for Parcelable **/
   private MeasurementResult(Parcel in) {
     ClassLoader loader = Thread.currentThread().getContextClassLoader();
@@ -345,12 +467,17 @@ public class MeasurementResult implements Parcelable {
     taskKey = in.readString();
     type = in.readString();
     taskProgress = (TaskProgress) in.readSerializable();
+    if (this.taskProgress == TaskProgress.COMPLETED) {
+      this.success = true;
+    } else {
+      this.success = false;
+    }
     measurementDesc = in.readParcelable(loader);
     values = in.readHashMap(loader);
+    taskId = in.readString();
   }
-  
-  public static final Parcelable.Creator<MeasurementResult> CREATOR
-      = new Parcelable.Creator<MeasurementResult>() {
+
+  public static final Parcelable.Creator<MeasurementResult> CREATOR = new Parcelable.Creator<MeasurementResult>() {
     public MeasurementResult createFromParcel(Parcel in) {
       return new MeasurementResult(in);
     }
@@ -359,18 +486,12 @@ public class MeasurementResult implements Parcelable {
       return new MeasurementResult[size];
     }
   };
-  
-  /* (non-Javadoc)
-   * @see android.os.Parcelable#describeContents()
-   */
+
   @Override
   public int describeContents() {
     return 0;
   }
 
-  /* (non-Javadoc)
-   * @see android.os.Parcelable#writeToParcel(android.os.Parcel, int)
-   */
   @Override
   public void writeToParcel(Parcel out, int flag) {
     out.writeString(deviceId);
@@ -381,5 +502,6 @@ public class MeasurementResult implements Parcelable {
     out.writeSerializable(taskProgress);
     out.writeParcelable(measurementDesc, flag);
     out.writeMap(values);
+    out.writeString(taskId);
   }
 }

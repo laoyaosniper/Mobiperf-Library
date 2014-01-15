@@ -151,7 +151,7 @@ public class TestTask extends MeasurementTask implements PreemptibleMeasurementT
     result=new MeasurementResult[1];
     result[0]=new MeasurementResult(phoneUtils.getDeviceInfo().deviceId,
       null, TestTask.TYPE, System.currentTimeMillis() * 1000,
-      taskProgress, this.measurementDesc);
+      taskProgress, this.measurementDesc, taskId);
 
 
     return result;

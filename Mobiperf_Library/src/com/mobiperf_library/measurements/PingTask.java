@@ -288,7 +288,7 @@ public class PingTask extends MeasurementTask{
 
     MeasurementResult result = new MeasurementResult(phoneUtils.getDeviceInfo().deviceId,
       phoneUtils.getDeviceProperty(), PingTask.TYPE, System.currentTimeMillis() * 1000,
-      TaskProgress.COMPLETED, this.measurementDesc);
+      TaskProgress.COMPLETED, this.measurementDesc, taskId);
 
     result.addResult("target_ip", targetIp);
     result.addResult("mean_rtt_ms", avg);
