@@ -18,7 +18,7 @@ import android.os.Parcel;
 import android.os.Parcelable;
 import android.util.StringBuilderPrinter;
 
-
+import java.util.ArrayList;
 import java.util.Formatter;
 import java.util.HashMap;
 
@@ -49,6 +49,7 @@ public class MeasurementResult implements Parcelable {
   private TaskProgress taskProgress;
   private MeasurementDesc measurementDesc;
   private HashMap<String, String> values;
+  private ArrayList<HashMap<String, String>> contextResults;
 
   
   public enum TaskProgress {//TODO changing paused to scheduled?
@@ -76,8 +77,14 @@ public class MeasurementResult implements Parcelable {
     this.measurementDesc = measurementDesc;
     this.measurementDesc.parameters = measurementDesc.parameters;
     this.values = new HashMap<String, String>();
+    this.contextResults= new ArrayList<HashMap<String,String>>();
   }
  
+  @SuppressWarnings("unchecked")
+public void addContextResults(ArrayList<HashMap<String, String>> contextResults){
+	  this.contextResults=(ArrayList<HashMap<String, String>>) contextResults.clone();
+  }
+  
   /* Returns the type of this result */ 
   public String getType() {
     return measurementDesc.getType();
@@ -96,11 +103,6 @@ public class MeasurementResult implements Parcelable {
     this.values.put(resultType, MeasurementJsonConvertor.toJsonString(resultVal));
   }
   
-//  public String toString() {
-//    return "TaskKey: " + taskKey + ", Type:" + type + ", Timestamp:" + timestamp
-//        + ", Property:" + properties.isBatteryCharging + ", measurementDesc:" + measurementDesc.intervalSec
-//        + ", DeviceId:" + deviceId;
-//  }
   
   /* Returns a string representation of the result */
   @Override
@@ -108,6 +110,7 @@ public class MeasurementResult implements Parcelable {
     StringBuilder builder = new StringBuilder();
     StringBuilderPrinter printer = new StringBuilderPrinter(builder);
     Formatter format = new Formatter();
+//    String results=getContextResult();
     try {
       if (type.equals(PingTask.TYPE)) {
         getPingResult(printer, values);
@@ -347,6 +350,7 @@ public class MeasurementResult implements Parcelable {
     taskProgress = (TaskProgress) in.readSerializable();
     measurementDesc = in.readParcelable(loader);
     values = in.readHashMap(loader);
+    contextResults=in.readArrayList(loader);
   }
   
   public static final Parcelable.Creator<MeasurementResult> CREATOR
@@ -381,5 +385,6 @@ public class MeasurementResult implements Parcelable {
     out.writeSerializable(taskProgress);
     out.writeParcelable(measurementDesc, flag);
     out.writeMap(values);
+    out.writeList(contextResults);//TODO (Ashkan): check this
   }
 }

@@ -14,9 +14,9 @@
  */
 package com.mobiperf_library;
 
+import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Map;
-import java.util.Vector;
+import java.util.HashMap;
 import java.util.concurrent.Callable;
 
 import android.content.Intent;
@@ -105,12 +105,13 @@ public class UserMeasurementTask implements Callable<MeasurementResult[]> {
       contextCollector.setInterval(realTask.getDescription().contextIntervalSec);
       contextCollector.startCollector();
       results = realTask.call();
-      Vector<Map<String, Object>> contextResults=contextCollector.stopCollector();
-      //TODO attach the results to the MeasurementResults 
+      ArrayList<HashMap<String, String>> contextResults=contextCollector.stopCollector();
+
       
       //TODO (Hongyi): better to catch exception in the same way of ServerMeasurement
       // otherwise iterating results may cause null pointer exception
       for(MeasurementResult r: results){
+    	r.addContextResults(contextResults);
         broadcastMeasurementEnd(r,realTask.measurementDesc.key, realTask.generateTaskID());
       }
     } catch (MeasurementError e) {

@@ -1,10 +1,10 @@
 package com.mobiperf_library;
 
+import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
-import java.util.Vector;
+
 
 import android.net.TrafficStats;
 
@@ -14,7 +14,7 @@ public class ContextCollector {
 	
 	// this thread is used for collecting context information in a time
 	// interval.
-	private volatile Vector<Map<String, Object>> contextResultVector;
+	private volatile ArrayList<HashMap<String, String>> contextResultArray;
 	private PhoneUtils phoneUtils;
 	private int interval;
 	private Timer timer;
@@ -23,7 +23,7 @@ public class ContextCollector {
 		 phoneUtils= PhoneUtils.getPhoneUtils();
 		 this.isRunning=false;
 		 this.timer=new Timer();
-		 contextResultVector= new Vector<Map<String,Object>>();
+		 contextResultArray= new ArrayList<HashMap<String,String>>();
 	}
 	
 	public void setInterval(int intervalSecond){
@@ -33,8 +33,8 @@ public class ContextCollector {
 		}
 	}
 	
-	private Map<String, Object> getCurrentContextInfo(){
-		Map<String, Object> currentContext= new HashMap<String, Object>();;
+	private HashMap<String, String> getCurrentContextInfo(){
+		HashMap<String, String> currentContext= new HashMap<String, String>();;
 		long prevSend = 0;
 		long prevRecv = 0;
 		long sendBytes = 0;
@@ -66,14 +66,14 @@ public class ContextCollector {
 		prevPktRecv = recvPkt;
 		
 		currentContext.put("timestamp",
-				System.currentTimeMillis() * 1000);
-		currentContext.put("rssi", phoneUtils.getCurrentRssi());
-		currentContext.put("inc_mobile_bytes_send", intervalSend);
-		currentContext.put("inc_mobile_bytes_recv", intervalRecv);
-		currentContext.put("inc_mobile_pkt_send", intervalPktSend);
-		currentContext.put("inc_mobile_pkt_recv", intervalPktRecv);
+				(System.currentTimeMillis() * 1000)+"");
+		currentContext.put("rssi", phoneUtils.getCurrentRssi()+"");
+		currentContext.put("inc_mobile_bytes_send", intervalSend+"");
+		currentContext.put("inc_mobile_bytes_recv", intervalRecv+"");
+		currentContext.put("inc_mobile_pkt_send", intervalPktSend+"");
+		currentContext.put("inc_mobile_pkt_recv", intervalPktRecv+"");
 		currentContext.put("battery_level",
-				phoneUtils.getCurrentBatteryLevel());
+				phoneUtils.getCurrentBatteryLevel()+"");
 		return currentContext;
 	}
 	
@@ -88,15 +88,15 @@ public class ContextCollector {
 		
 	}
 	
-	public Vector<Map<String, Object>> stopCollector(){
+	public ArrayList<HashMap<String, String>> stopCollector(){
 		if(!isRunning){
 			return null;
 		}
 		timerTask.cancel();
 		timer.cancel();
 		isRunning=false;
-		contextResultVector.add(getCurrentContextInfo());
-		return contextResultVector;
+		contextResultArray.add(getCurrentContextInfo());
+		return contextResultArray;
 	}
 	
 	
@@ -104,7 +104,7 @@ public class ContextCollector {
 	 private TimerTask timerTask= new TimerTask(){
 		  @Override
 		  public void run() {
-			  contextResultVector.add(getCurrentContextInfo());
+			  contextResultArray.add(getCurrentContextInfo());
 		  }
 	  };
 	
