@@ -14,9 +14,9 @@
  */
 package com.mobiperf_library;
 
+import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Map;
-import java.util.Vector;
+import java.util.HashMap;
 import java.util.concurrent.Callable;
 
 import android.content.Intent;
@@ -83,7 +83,7 @@ public class UserMeasurementTask implements Callable<MeasurementResult[]> {
       contextCollector.setInterval(realTask.getDescription().contextIntervalSec);
       contextCollector.startCollector();
       results = realTask.call();
-      Vector<Map<String, Object>> contextResults=contextCollector.stopCollector();
+      ArrayList<HashMap<String, String>> contextResults=contextCollector.stopCollector();
       //TODO attach the results to the MeasurementResults 
     } catch (MeasurementError e) {
       Logger.e("User measurement " + realTask.getDescriptor() + " has failed");

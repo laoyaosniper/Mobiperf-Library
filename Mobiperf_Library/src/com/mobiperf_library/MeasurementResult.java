@@ -25,6 +25,10 @@ import android.os.Parcel;
 import android.os.Parcelable;
 import android.util.StringBuilderPrinter;
 
+import java.util.ArrayList;
+import java.util.Formatter;
+import java.util.HashMap;
+
 import com.mobiperf_library.measurements.DnsLookupTask;
 import com.mobiperf_library.measurements.ParallelTask;
 import com.mobiperf_library.measurements.DnsLookupTask.DnsLookupDesc;
@@ -56,6 +60,7 @@ public class MeasurementResult implements Parcelable {
   private TaskProgress taskProgress;
   private MeasurementDesc measurementDesc;
   private HashMap<String, String> values;
+  private ArrayList<HashMap<String, String>> contextResults;
 
   public enum TaskProgress {// TODO changing paused to scheduled?
     COMPLETED, PAUSED, FAILED
@@ -87,17 +92,27 @@ public class MeasurementResult implements Parcelable {
     this.measurementDesc = measurementDesc;
     this.measurementDesc.parameters = measurementDesc.parameters;
     this.values = new HashMap<String, String>();
+    this.contextResults= new ArrayList<HashMap<String,String>>();
   }
   
 
 
-  private static String getStackTrace(Throwable error) {
+  @SuppressWarnings("unchecked")
+public void addContextResults(ArrayList<HashMap<String, String>> contextResults){
+    this.contextResults=(ArrayList<HashMap<String, String>>) contextResults.clone();
+  }
+  
+  /* Returns the type of this result */ 
+  public String getType() {
+    return measurementDesc.getType();
+  }
+
+   private static String getStackTrace(Throwable error) {
     final Writer result = new StringWriter();
     final PrintWriter printWriter = new PrintWriter(result);
     error.printStackTrace(printWriter);
     return result.toString();
   }
-  
   public static MeasurementResult[] getFailureResult(MeasurementTask task, Throwable error) {
     PhoneUtils phoneUtils = PhoneUtils.getPhoneUtils();
     ArrayList<MeasurementResult> results = new ArrayList<MeasurementResult>();
@@ -185,6 +200,7 @@ public class MeasurementResult implements Parcelable {
     StringBuilder builder = new StringBuilder();
     StringBuilderPrinter printer = new StringBuilderPrinter(builder);
     Formatter format = new Formatter();
+//    String results=getContextResult();
     try {
       if (type.equals(PingTask.TYPE)) {
         getPingResult(printer, values);
@@ -484,6 +500,7 @@ public class MeasurementResult implements Parcelable {
     }
     measurementDesc = in.readParcelable(loader);
     values = in.readHashMap(loader);
+    contextResults=in.readArrayList(loader);
   }
 
   public static final Parcelable.Creator<MeasurementResult> CREATOR = new Parcelable.Creator<MeasurementResult>() {
@@ -510,5 +527,6 @@ public class MeasurementResult implements Parcelable {
     out.writeSerializable(taskProgress);
     out.writeParcelable(measurementDesc, flag);
     out.writeMap(values);
+    out.writeList(contextResults);//TODO (Ashkan): check this
   }
 }
