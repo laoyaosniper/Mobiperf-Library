@@ -45,6 +45,9 @@ public interface Config {
   public static final long TASK_EXPIRATION_MSEC = 24 * 3600 * 1000;
   /** Default interval in seconds between system measurements of a given measurement type*///TODO
   public static final double DEFAULT_SYSTEM_MEASUREMENT_INTERVAL_SEC = 15 * 60;
+  /** Default interval in seconds between context collection*///TODO
+  public static final double DEFAULT_SYSTEM_CONTEXT_COLLECTION_INTERVAL_SEC = 1;
+  
 
 
   //TODO check these static values
@@ -74,6 +77,8 @@ public interface Config {
   public static final int MAX_CHECKIN_RETRY_COUNT = 3;
   public static final long PAUSE_BETWEEN_CHECKIN_CHANGE_MSEC = 10 * 1000L;
   public static final long MIN_CHECKIN_INTERVAL_SEC = 3600;
+  
+  public static final int DEFAULT_CONTEXT_INTERVAL_SEC = 1;
 
 
 

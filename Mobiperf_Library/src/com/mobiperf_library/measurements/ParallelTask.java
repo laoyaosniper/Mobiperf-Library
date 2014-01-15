@@ -21,6 +21,7 @@ import com.mobiperf_library.MeasurementDesc;
 import com.mobiperf_library.MeasurementResult;
 import com.mobiperf_library.MeasurementTask;
 import com.mobiperf_library.exceptions.MeasurementError;
+import com.mobiperf_library.util.Logger;
 
 
 
@@ -40,10 +41,10 @@ public class ParallelTask extends MeasurementTask{
   public static class ParallelDesc extends MeasurementDesc {     
 
     public ParallelDesc(String key, Date startTime,
-                        Date endTime, double intervalSec, long count, long priority, 
+                        Date endTime, double intervalSec, long count, long priority, int contextIntervalSec,  
                         Map<String, String> params) throws InvalidParameterException {
       super(ParallelTask.TYPE, key, startTime, endTime, intervalSec, count,
-        priority, params);  
+        priority, contextIntervalSec, params);  
       //      initializeParams(params);
 
     }
@@ -93,7 +94,7 @@ public class ParallelTask extends MeasurementTask{
 
   public ParallelTask(MeasurementDesc desc,  ArrayList<MeasurementTask> tasks) {
     super(new ParallelDesc(desc.key, desc.startTime, desc.endTime, desc.intervalSec,
-      desc.count, desc.priority, desc.parameters));
+      desc.count, desc.priority, desc.contextIntervalSec, desc.parameters));
     this.tasks=(List<MeasurementTask>) tasks.clone();
     executor=Executors.newFixedThreadPool(this.tasks.size());
     long maxduration=0;
@@ -157,7 +158,7 @@ public class ParallelTask extends MeasurementTask{
     if(timeout==0){
       timeout=Config.DEFAULT_PARALLEL_TASK_DURATION;
     }else{
-      timeout*=2;//TODO
+      timeout*=2;
     }
     ArrayList<MeasurementResult> allresults=new ArrayList<MeasurementResult>();
     List<Future<MeasurementResult[]>> futures;
@@ -165,16 +166,15 @@ public class ParallelTask extends MeasurementTask{
       futures=executor.invokeAll(this.tasks,timeout,TimeUnit.MILLISECONDS);
       for(Future<MeasurementResult[]> f: futures){
         MeasurementResult[] r=f.get();
-        for(int i=0;i<r.length;i++){//TODO
+        for(int i=0;i<r.length;i++){
           allresults.add(r[i]);
         }
       }
 
     } catch (InterruptedException e) {
-//      //TODO test it--> timeout
-      throw new MeasurementError("Parallel task get interrupted! " + e.getMessage());
+      Logger.e("Parallel task " + this.getTaskID()+" got interrupted");
     }catch (ExecutionException e) {
-      throw new MeasurementError("Execution error: " + e.getMessage());
+      throw new MeasurementError("Execution error: " + e.getCause());
     }
     finally{
       executor.shutdown();
@@ -192,7 +192,7 @@ public class ParallelTask extends MeasurementTask{
   public MeasurementTask clone() {
     MeasurementDesc desc = this.measurementDesc;
     ParallelDesc newDesc = new ParallelDesc(desc.key, desc.startTime, desc.endTime, 
-      desc.intervalSec, desc.count, desc.priority, desc.parameters);
+      desc.intervalSec, desc.count, desc.priority, desc.contextIntervalSec, desc.parameters);
     ArrayList<MeasurementTask> newTaskList=new ArrayList<MeasurementTask>();
     for(MeasurementTask mt: tasks){
       newTaskList.add(mt.clone());

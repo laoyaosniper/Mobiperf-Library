@@ -35,7 +35,7 @@ public class TestTask extends MeasurementTask implements PreemptibleMeasurementT
 
   public TestTask(MeasurementDesc desc) {
     super(new TestDesc(desc.key, desc.startTime, desc.endTime, desc.intervalSec,
-      desc.count, desc.priority, desc.parameters));
+      desc.count, desc.priority, desc.contextIntervalSec, desc.parameters));
     this.stopFlag=false;
     this.pauseFlag=false;
     resultsArray=new ArrayList<Double>();
@@ -50,9 +50,9 @@ public class TestTask extends MeasurementTask implements PreemptibleMeasurementT
 
     public int num;
     public TestDesc(String key, Date startTime, Date endTime, double intervalSec, long count, long priority, 
-                    Map<String, String> params) throws InvalidParameterException {
+                    int contextIntervalSec, Map<String, String> params) throws InvalidParameterException {
       super(TestTask.TYPE, key, startTime, endTime, intervalSec, count,
-        priority, params);
+        priority, contextIntervalSec, params);
       initializeParams(params);
 
       if (this.num == 0){
@@ -147,7 +147,7 @@ public class TestTask extends MeasurementTask implements PreemptibleMeasurementT
 
     //    result=new MeasurementResult(phoneUtils.getDeviceInfo().deviceId,
     //        phoneUtils.getDeviceProperty(), TestTask.TYPE, System.currentTimeMillis() * 1000,
-    //        tp, this.measurementDesc);//TODO
+    //        tp, this.measurementDesc);
     result=new MeasurementResult[1];
     result[0]=new MeasurementResult(phoneUtils.getDeviceInfo().deviceId,
       null, TestTask.TYPE, System.currentTimeMillis() * 1000,
@@ -169,7 +169,7 @@ public class TestTask extends MeasurementTask implements PreemptibleMeasurementT
   public MeasurementTask clone() {
     MeasurementDesc desc = this.measurementDesc;
     TestDesc newDesc = new TestDesc(desc.key, desc.startTime, desc.endTime, 
-      desc.intervalSec, desc.count, desc.priority, desc.parameters);
+      desc.intervalSec, desc.count, desc.priority, desc.contextIntervalSec, desc.parameters);
     return new TestTask(newDesc);
   }
 
@@ -188,12 +188,6 @@ public class TestTask extends MeasurementTask implements PreemptibleMeasurementT
     return true;
   }
 
-
-  //  @Override
-  //  public void resume() {
-  //    // TODO Auto-generated method stub
-  //
-  //  }
 
 
   @Override

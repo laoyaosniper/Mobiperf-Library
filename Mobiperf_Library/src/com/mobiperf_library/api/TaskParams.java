@@ -28,10 +28,11 @@ public class TaskParams {
   public double intervalSec;
   public long count;
   public long priority;
+  public int contextIntervalSec;
   
   Map<String, String> params; 
   public TaskParams( int taskType, String key, Date startTime, Date endTime
-    , double intervalSec, long count, long priority, Map<String, String> params) {
+    , double intervalSec, long count, long priority, int contextIntervalSec,  Map<String, String> params) {
     this.taskType = taskType;
     this.key = key;
     this.startTime = startTime;
@@ -39,6 +40,7 @@ public class TaskParams {
     this.intervalSec = intervalSec;
     this.count = count;
     this.priority = priority;
+    this.contextIntervalSec=contextIntervalSec;
     this.params = params;
   }
   

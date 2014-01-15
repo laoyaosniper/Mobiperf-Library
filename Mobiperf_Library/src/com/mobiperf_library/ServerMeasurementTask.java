@@ -14,6 +14,9 @@
  */
 package com.mobiperf_library;
 
+import java.util.Calendar;
+import java.util.Map;
+import java.util.Vector;
 import java.util.concurrent.Callable;
 
 import android.content.Intent;
@@ -24,18 +27,16 @@ import com.mobiperf_library.exceptions.MeasurementSkippedException;
 import com.mobiperf_library.util.Logger;
 import com.mobiperf_library.util.PhoneUtils;
 
-/**
- * @author Hongyi Yao
- *
- */
 
 
 public class ServerMeasurementTask implements Callable<MeasurementResult []> {
   private MeasurementTask realTask;
   private MeasurementScheduler scheduler;
+  private ContextCollector contextCollector;
   public ServerMeasurementTask(MeasurementTask task, MeasurementScheduler scheduler) {
     realTask = task;
     this.scheduler = scheduler;
+    this.contextCollector= new ContextCollector();
   }
 
   private void broadcastMeasurementStart() {
@@ -90,7 +91,10 @@ public class ServerMeasurementTask implements Callable<MeasurementResult []> {
       }
       broadcastMeasurementStart();
       try {
+        contextCollector.setInterval(realTask.getDescription().contextIntervalSec);
+        contextCollector.startCollector();
         results = realTask.call(); 
+        Vector<Map<String, Object>> contextResults=contextCollector.stopCollector();
         broadcastMeasurementEnd(results, null);
       } catch (MeasurementError e) {
         String error = "Server measurement " + realTask.getDescriptor() 

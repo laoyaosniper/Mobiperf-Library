@@ -14,6 +14,9 @@
  */
 package com.mobiperf_library;
 
+import java.util.Calendar;
+import java.util.Map;
+import java.util.Vector;
 import java.util.concurrent.Callable;
 
 import android.content.Intent;
@@ -23,18 +26,15 @@ import com.mobiperf_library.exceptions.MeasurementError;
 import com.mobiperf_library.util.Logger;
 import com.mobiperf_library.util.PhoneUtils;
 
-/**
- * @author Hongyi Yao
- *
- */
-
 public class UserMeasurementTask implements Callable<MeasurementResult[]> {
-  MeasurementTask realTask;
-  MeasurementScheduler scheduler;
+  private MeasurementTask realTask;
+  private MeasurementScheduler scheduler;
+  private ContextCollector contextCollector;
 
   public UserMeasurementTask(MeasurementTask task, MeasurementScheduler scheduler) {
     realTask = task;
     this.scheduler = scheduler;  
+    this.contextCollector= new ContextCollector();
   }
 
   private void broadcastMeasurementStart() {
@@ -63,7 +63,6 @@ public class UserMeasurementTask implements Callable<MeasurementResult[]> {
       else{
         intent.putExtra(UpdateIntent.TASK_STATUS_PAYLOAD, Config.TASK_FINISHED);
         intent.putExtra(UpdateIntent.RESULT_PAYLOAD, results);
-        //scheduler.sendResultMessage(result, result.getTaskKey(), realTask.getTaskId());
       }
       scheduler.sendBroadcast(intent);
     }
@@ -81,9 +80,11 @@ public class UserMeasurementTask implements Callable<MeasurementResult[]> {
     try {
       phoneUtils.acquireWakeLock();
       broadcastMeasurementStart();
+      contextCollector.setInterval(realTask.getDescription().contextIntervalSec);
+      contextCollector.startCollector();
       results = realTask.call();
-      // Hongyi: better to catch exception in the same way of ServerMeasurement
-      // otherwise iterating results may cause null pointer exception
+      Vector<Map<String, Object>> contextResults=contextCollector.stopCollector();
+      //TODO attach the results to the MeasurementResults 
     } catch (MeasurementError e) {
       Logger.e("User measurement " + realTask.getDescriptor() + " has failed");
       Logger.e(e.getMessage());

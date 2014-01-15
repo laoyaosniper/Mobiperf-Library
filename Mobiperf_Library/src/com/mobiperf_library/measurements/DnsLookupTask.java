@@ -54,8 +54,8 @@ public class DnsLookupTask extends MeasurementTask{
 
 
     public DnsLookupDesc(String key, Date startTime, Date endTime,
-                         double intervalSec, long count, long priority, Map<String, String> params) {
-      super(DnsLookupTask.TYPE, key, startTime, endTime, intervalSec, count, priority, params);
+                         double intervalSec, long count, long priority, int contextIntervalSec, Map<String, String> params) {
+      super(DnsLookupTask.TYPE, key, startTime, endTime, intervalSec, count, priority, contextIntervalSec, params);
       initializeParams(params);
       if (this.target == null || this.target.length() == 0) {
         throw new InvalidParameterException("LookupDnsTask cannot be created due " +
@@ -115,7 +115,7 @@ public class DnsLookupTask extends MeasurementTask{
 
   public DnsLookupTask(MeasurementDesc desc) {
     super(new DnsLookupDesc(desc.key, desc.startTime, desc.endTime, desc.intervalSec,
-      desc.count, desc.priority, desc.parameters));
+      desc.count, desc.priority, desc.contextIntervalSec, desc.parameters));
     this.duration=Config.DNS_TASK_DURATION;
   }
   
@@ -152,7 +152,7 @@ public class DnsLookupTask extends MeasurementTask{
   public MeasurementTask clone() {
     MeasurementDesc desc = this.measurementDesc;
     DnsLookupDesc newDesc = new DnsLookupDesc(desc.key, desc.startTime, desc.endTime, 
-      desc.intervalSec, desc.count, desc.priority, desc.parameters);
+      desc.intervalSec, desc.count, desc.priority, desc.contextIntervalSec, desc.parameters);
     return new DnsLookupTask(newDesc);
   }
 

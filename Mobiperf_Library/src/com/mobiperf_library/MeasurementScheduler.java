@@ -95,7 +95,7 @@ public class MeasurementScheduler extends Service{
   private Messenger messenger;
   
   // context collector class
-  private ContextCollector contextCollector;
+  
 
 
   @Override
@@ -103,10 +103,8 @@ public class MeasurementScheduler extends Service{
 
     Logger.d("MeasurementScheduler -> onCreate called");
     PhoneUtils.setGlobalContext(this.getApplicationContext());
-    // Initialize context collector
-    contextCollector = new ContextCollector();
-    contextCollector.start();
-
+    
+    
     phoneUtils = PhoneUtils.getPhoneUtils();
     phoneUtils.registerSignalStrengthListener();
 
@@ -150,14 +148,13 @@ public class MeasurementScheduler extends Service{
 
       @Override
       public void onReceive(Context context, Intent intent) {
-        Logger.i(intent.getAction()+" RECEIVED");
+        Logger.d(intent.getAction()+" RECEIVED");
         if (intent.getAction().equals(UpdateIntent.MEASUREMENT_ACTION)) {
           handleMeasurement();
         }else if (intent.getAction().equals(UpdateIntent.MEASUREMENT_PROGRESS_UPDATE_ACTION)) {
           String taskid=intent.getStringExtra(UpdateIntent.TASKID_PAYLOAD);
           String taskKey=intent.getStringExtra(UpdateIntent.TASKKEY_PAYLOAD);
           Logger.e(intent.getStringExtra(UpdateIntent.TASK_STATUS_PAYLOAD)+" "+taskid + " " + taskKey);
-          
           if(intent.getStringExtra(UpdateIntent.TASK_STATUS_PAYLOAD).equals(Config.TASK_FINISHED)){
             tasksStatus.put( taskid,TaskStatus.FINISHED);
             Parcelable[] results = intent.getParcelableArrayExtra(UpdateIntent.RESULT_PAYLOAD);
