@@ -15,9 +15,6 @@
 package com.mobiperf_library;
 
 import java.io.IOException;
-import java.io.PrintWriter;
-import java.io.StringWriter;
-import java.io.Writer;
 import java.util.Calendar;
 import java.util.Comparator;
 import java.util.ConcurrentModificationException;
@@ -39,7 +36,6 @@ import com.mobiperf_library.Config;
 import com.mobiperf_library.MeasurementTask;
 import com.mobiperf_library.UpdateIntent;
 
-import com.mobiperf_library.MeasurementResult.TaskProgress;
 import com.mobiperf_library.util.Logger;
 import com.mobiperf_library.util.PhoneUtils;
 import com.mobiperf_library.exceptions.MeasurementSkippedException;
@@ -55,6 +51,7 @@ import android.os.Bundle;
 import android.os.IBinder;
 import android.os.Message;
 import android.os.Messenger;
+import android.os.Parcelable;
 import android.os.RemoteException;
 
 public class MeasurementScheduler extends Service{
@@ -158,18 +155,15 @@ public class MeasurementScheduler extends Service{
           handleMeasurement();
         }else if (intent.getAction().equals(UpdateIntent.MEASUREMENT_PROGRESS_UPDATE_ACTION)) {
           String taskid=intent.getStringExtra(UpdateIntent.TASKID_PAYLOAD);
-          Logger.e(intent.getStringExtra(UpdateIntent.TASK_STATUS_PAYLOAD)+" "+taskid);
+          String taskKey=intent.getStringExtra(UpdateIntent.TASKKEY_PAYLOAD);
+          Logger.e(intent.getStringExtra(UpdateIntent.TASK_STATUS_PAYLOAD)+" "+taskid + " " + taskKey);
+          
           if(intent.getStringExtra(UpdateIntent.TASK_STATUS_PAYLOAD).equals(Config.TASK_FINISHED)){
             tasksStatus.put( taskid,TaskStatus.FINISHED);
-            MeasurementResult result = intent.getParcelableExtra(UpdateIntent.RESULT_PAYLOAD);
-            if ( result != null ) {
-              sendResultMessage(result, result.getTaskKey(), result.getTaskId());
+            Parcelable[] results = intent.getParcelableArrayExtra(UpdateIntent.RESULT_PAYLOAD);
+            if ( results != null ) {
+              sendResultMessage(results, taskKey, taskid);
             }
-//            if (intent.getStringExtra(UpdateIntent.ERROR_STRING_PAYLOAD) != null) {
-//              //TODO failed return result
-//            } else {
-//              //TODO completed, return result
-//            }
             handleMeasurement();
           }
           else if(intent.getStringExtra(UpdateIntent.TASK_STATUS_PAYLOAD).equals(Config.TASK_PAUSED)){
@@ -182,9 +176,9 @@ public class MeasurementScheduler extends Service{
             //TODO notifying users? The task is cancelled if endtime<currenttime
             // Hongyi: Sure
             tasksStatus.put( taskid,TaskStatus.CANCELLED);
-            MeasurementResult result = intent.getParcelableExtra(UpdateIntent.RESULT_PAYLOAD);
-            if ( result != null ) {
-              sendResultMessage(result, result.getTaskKey(), result.getTaskId());
+            Parcelable[] results = intent.getParcelableArrayExtra(UpdateIntent.RESULT_PAYLOAD);
+            if ( results != null ) {
+              sendResultMessage(results, taskKey, taskid);
             }
           }
           else if (intent.getStringExtra(UpdateIntent.TASK_STATUS_PAYLOAD).equals(Config.TASK_STARTED)) {
@@ -288,7 +282,6 @@ public class MeasurementScheduler extends Service{
             newTask.getDescription().count--;
           }
           newTask.getDescription().startTime.setTime(newStartTime);
-//          tasksStatus.put(newTask.generateTaskID(), TaskStatus.SCHEDULED);
           tasksStatus.put(newTask.getTaskId(), TaskStatus.SCHEDULED);
           mainQueue.add(newTask);
         }
@@ -297,10 +290,11 @@ public class MeasurementScheduler extends Service{
           Intent intent = new Intent();
           intent.setAction(UpdateIntent.MEASUREMENT_PROGRESS_UPDATE_ACTION);
           intent.putExtra(UpdateIntent.TASK_STATUS_PAYLOAD, Config.TASK_CANCELED);
-          intent.putExtra(UpdateIntent.RESULT_PAYLOAD, getFailureResult(ready, 
-            new Exception("Task cancelled by scheduler! End time expired")));
-//          intent.putExtra(UpdateIntent.TASKID_PAYLOAD, ready.generateTaskID());
+          MeasurementResult[] tempResults = MeasurementResult.getFailureResult(ready, 
+            new CancellationException("Task cancelled!"));
+          intent.putExtra(UpdateIntent.RESULT_PAYLOAD, tempResults);
           intent.putExtra(UpdateIntent.TASKID_PAYLOAD, ready.getTaskId());
+          intent.putExtra(UpdateIntent.TASKKEY_PAYLOAD, ready.getKey());
           MeasurementScheduler.this.sendBroadcast(intent);
           handleMeasurement();
         }else{
@@ -515,27 +509,27 @@ public class MeasurementScheduler extends Service{
     }
   }
 
-  public void sendResultMessage (MeasurementResult result, String clientKey, String taskId) {
+  public void sendResultMessage (Parcelable[] results, String clientKey, String taskId) {
     // Hongyi: return the result to client by message
     Messenger messenger = mClients.get(clientKey);
     if (messenger != null) {
       Message msg = Message.obtain(null, Config.MSG_SEND_RESULT);
       Bundle data = new Bundle();     
-      data.putParcelable("result", result);   
+      data.putParcelableArray("results", results);   
       data.putString("taskId", taskId);      
-      Logger.d("(Hongyi) TaskId: " + taskId);
-      if ( result != null ) {
-        Logger.d("Result: " + result.toString());
-      }
-      else {
-        Logger.d("Empty Result!");
-      }
+      Logger.d("Sending result back to client: taskId: " + taskId);
+//      if ( result != null ) {
+//        Logger.d("Result: " + result.toString());
+//      }
+//      else {
+//        Logger.d("Empty Result!");
+//      }
       msg.setData(data);
       try {
         messenger.send(msg);
       } catch (RemoteException e) {
         // The client is dead, just remove it
-        mClients.remove(result.getTaskKey());
+        mClients.remove(clientKey);
       }
     }
     else {
@@ -543,8 +537,8 @@ public class MeasurementScheduler extends Service{
     }
   }
 
-  public void sendResultMessage (MeasurementResult result, String clientKey) {
-    sendResultMessage(result, clientKey, "hahaha");
+  public void sendResultMessage (Parcelable[] results, String clientKey) {
+    sendResultMessage(results, clientKey, "hahaha");
   }
   
 
@@ -690,29 +684,6 @@ public class MeasurementScheduler extends Service{
     }
   }
 
-  private String getStackTrace(Throwable error) {
-    final Writer result = new StringWriter();
-    final PrintWriter printWriter = new PrintWriter(result);
-    error.printStackTrace(printWriter);
-    return result.toString();
-  }
-
-  // Hongyi: change it to public
-  public MeasurementResult getFailureResult(MeasurementTask task, Throwable error) {
-    MeasurementResult result = new MeasurementResult(
-      phoneUtils.getDeviceInfo().deviceId,
-      phoneUtils.getDeviceProperty(),
-      task.getType(),
-      System.currentTimeMillis() * 1000,
-      TaskProgress.FAILED,
-      task.measurementDesc,
-      task.getTaskId());
-    result.addResult("error", error.toString() + "\n" + getStackTrace(error));
-    return result;
-  }
-
-
-
   private void uploadResults() {
     Vector<MeasurementResult> finishedTasks = new Vector<MeasurementResult>();
     MeasurementResult[] results;
@@ -734,8 +705,11 @@ public class MeasurementScheduler extends Service{
 
                 } else {
                   Logger.e("Task execution was canceled");
-                  finishedTasks.add(this.getFailureResult(task,
-                    new CancellationException("Task cancelled")));
+                  results = MeasurementResult.getFailureResult(task,
+                    new CancellationException("Task cancelled"));
+                  for ( MeasurementResult r: results ) {
+                    finishedTasks.add(r);
+                  }
                 }
               } catch (InterruptedException e) {
                 Logger.e("Task execution interrupted", e);
@@ -746,7 +720,10 @@ public class MeasurementScheduler extends Service{
                 } else {
                   // Log the error
                   Logger.e("Task execution failed", e.getCause());
-                  finishedTasks.add(this.getFailureResult(task, e.getCause()));
+                  results = MeasurementResult.getFailureResult(task, e.getCause());
+                  for ( MeasurementResult r: results ) {
+                    finishedTasks.add(r);
+                  }
                 }
               } catch (CancellationException e) {
                 Logger.e("Task cancelled", e);

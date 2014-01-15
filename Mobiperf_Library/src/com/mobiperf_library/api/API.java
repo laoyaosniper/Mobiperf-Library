@@ -26,6 +26,7 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
 import android.os.Messenger;
+import android.os.Parcelable;
 import android.os.RemoteException;
 
 
@@ -91,7 +92,7 @@ public abstract class API {
    * The user must implement this interface to use the library
    * @param result
    */
-  public abstract void handleResult(MeasurementResult result);
+  public abstract void handleResult(MeasurementResult[] results);
   /**
    * Handler of incoming messages from service.
    */
@@ -105,7 +106,7 @@ public abstract class API {
       int localId, pid;
       String taskId;
       String text = null;
-      MeasurementResult result;
+      MeasurementResult[] results;
       switch (msg.what) {
         case Config.MSG_SUBMIT_TASK:
           localId = msg.arg1;
@@ -121,14 +122,17 @@ public abstract class API {
           //Toast.makeText(parent, "Task added! id = " + localId + ", scheduler pid = " + pid + ", taskId = " + taskId, Toast.LENGTH_SHORT).show();
           break;
         case Config.MSG_SEND_RESULT:
-          result = data.getParcelable("result");
-          
+          Parcelable[] parcels = data.getParcelableArray("results");
+          results = new MeasurementResult[parcels.length];
+          for ( int i = 0; i < results.length; i++ ) {
+            results[i] = (MeasurementResult) parcels[i];
+          }
           
           taskId = data.getString("taskId");
           //Toast.makeText(parent, "Got TaskId " + taskId + ", corresponding local Id is " + globalToLocalMap.get(taskId), Toast.LENGTH_SHORT).show();
           localToGlobalMap.remove(globalToLocalMap.get(taskId));
           globalToLocalMap.remove(taskId);
-          handleResult(result);
+          handleResult(results);
           break;
         case Config.MSG_CANCEL_TASK:
           taskId = data.getString("taskId");

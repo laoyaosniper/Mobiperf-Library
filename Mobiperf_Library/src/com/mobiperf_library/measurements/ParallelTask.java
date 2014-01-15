@@ -166,8 +166,6 @@ public class ParallelTask extends MeasurementTask{
       for(Future<MeasurementResult[]> f: futures){
         MeasurementResult[] r=f.get();
         for(int i=0;i<r.length;i++){//TODO
-          // Hongyi: change taskId
-          r[i].setTaskId(taskId);
           allresults.add(r[i]);
         }
       }

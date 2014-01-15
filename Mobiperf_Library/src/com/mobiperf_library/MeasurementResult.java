@@ -17,6 +17,7 @@ package com.mobiperf_library;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.io.Writer;
+import java.util.ArrayList;
 import java.util.Formatter;
 import java.util.HashMap;
 
@@ -51,13 +52,10 @@ public class MeasurementResult implements Parcelable {
                     // results to server
   private long timestamp;
   private boolean success;
-  private String taskKey;// ??
   private String type;
   private TaskProgress taskProgress;
   private MeasurementDesc measurementDesc;
   private HashMap<String, String> values;
-  // Hongyi: add taskId and error string
-  private String taskId;
 
   public enum TaskProgress {// TODO changing paused to scheduled?
     COMPLETED, PAUSED, FAILED
@@ -72,10 +70,9 @@ public class MeasurementResult implements Parcelable {
    */
   public MeasurementResult(String id, DeviceProperty deviceProperty,
     String type, long timeStamp, TaskProgress taskProgress,
-    MeasurementDesc measurementDesc, String taskId) {
+    MeasurementDesc measurementDesc) {
     super();
 
-    this.taskKey = measurementDesc.key;
     this.deviceId = id;
     this.type = type;
     this.properties = deviceProperty;
@@ -90,7 +87,6 @@ public class MeasurementResult implements Parcelable {
     this.measurementDesc = measurementDesc;
     this.measurementDesc.parameters = measurementDesc.parameters;
     this.values = new HashMap<String, String>();
-    this.taskId = taskId;
   }
   
 
@@ -102,31 +98,50 @@ public class MeasurementResult implements Parcelable {
     return result.toString();
   }
   
-  public static MeasurementResult getFailureResult(MeasurementTask task, Throwable error) {
+  public static MeasurementResult[] getFailureResult(MeasurementTask task, Throwable error) {
     PhoneUtils phoneUtils = PhoneUtils.getPhoneUtils();
-    MeasurementResult result = new MeasurementResult(
-      phoneUtils.getDeviceInfo().deviceId,
-      phoneUtils.getDeviceProperty(),
-      task.getType(),
-      System.currentTimeMillis() * 1000,
-      TaskProgress.FAILED,
-      task.measurementDesc,
-      task.getTaskId());
-    result.addResult("error", error.toString() + "\n" + getStackTrace(error));
-    return result;
-  }
-  
-  public static MeasurementResult[] getFailureResultsWithTaskId(
-       MeasurementTask[] tasks, String taskId, Throwable err) {
-    MeasurementResult[] results = null;
-    if ( tasks != null ) {
-      results = new MeasurementResult[tasks.length];
-      for ( int i = 0; i < tasks.length; i++ ) {
-        results[i] = getFailureResult(tasks[i], err);
-        results[i].setTaskId(taskId);
+    ArrayList<MeasurementResult> results = new ArrayList<MeasurementResult>();
+    
+    if ( task.getType().equals(ParallelTask.TYPE) ) {
+      ParallelTask pTask = (ParallelTask)task;
+      MeasurementResult[] tempResults = MeasurementResult.getFailureResults(pTask.getTasks(), error);
+      for ( MeasurementResult r : tempResults ) {
+        results.add(r);
       }
     }
-    return results;
+    else if (task.getType().equals(SequentialTask.TYPE) ) {
+      SequentialTask sTask = (SequentialTask)task;
+      MeasurementResult[] tempResults = MeasurementResult.getFailureResults(sTask.getTasks(), error);
+      for ( MeasurementResult r : tempResults ) {
+        results.add(r);
+      }
+    }
+    else {
+      MeasurementResult r = new MeasurementResult(
+        phoneUtils.getDeviceInfo().deviceId,
+        phoneUtils.getDeviceProperty(),
+        task.getType(),
+        System.currentTimeMillis() * 1000,
+        TaskProgress.FAILED,
+        task.measurementDesc);
+      r.addResult("error", error.toString() + "\n" + getStackTrace(error));
+      results.add(r);
+    }
+    return results.toArray(new MeasurementResult[results.size()]);
+  }
+  
+  private static MeasurementResult[] getFailureResults(
+       MeasurementTask[] tasks, Throwable err) {
+    ArrayList<MeasurementResult> results = new ArrayList<MeasurementResult>();
+    if ( tasks != null ) {
+      for ( MeasurementTask t : tasks ) {
+        MeasurementResult[] tempResults = getFailureResult(t, err); 
+        for ( MeasurementResult r : tempResults ) {
+          results.add(r);
+        }
+      }
+    }
+    return results.toArray(new MeasurementResult[results.size()]);
   }
   
   /* Returns the type of this result */
@@ -138,20 +153,16 @@ public class MeasurementResult implements Parcelable {
     return this.taskProgress;
   }
 
-  public String getTaskKey() {
-    return this.taskKey;
+  public void setTaskProgress(TaskProgress progress) {
+    this.taskProgress = progress;
   }
+  
+//  public String getTaskKey() {
+//    return this.measurementDesc.key;
+//  }
 
   public boolean isSucceed() {
     return this.success;
-  }
-
-  public String getTaskId() {
-    return taskId;
-  }
-  
-  public void setTaskId(String taskId) {
-    this.taskId = taskId;
   }
   
   /* Add the measurement results of type String into the class */
@@ -464,7 +475,6 @@ public class MeasurementResult implements Parcelable {
     deviceId = in.readString();
     properties = in.readParcelable(loader);
     timestamp = in.readLong();
-    taskKey = in.readString();
     type = in.readString();
     taskProgress = (TaskProgress) in.readSerializable();
     if (this.taskProgress == TaskProgress.COMPLETED) {
@@ -474,7 +484,6 @@ public class MeasurementResult implements Parcelable {
     }
     measurementDesc = in.readParcelable(loader);
     values = in.readHashMap(loader);
-    taskId = in.readString();
   }
 
   public static final Parcelable.Creator<MeasurementResult> CREATOR = new Parcelable.Creator<MeasurementResult>() {
@@ -497,11 +506,9 @@ public class MeasurementResult implements Parcelable {
     out.writeString(deviceId);
     out.writeParcelable(properties, flag);
     out.writeLong(timestamp);
-    out.writeString(taskKey);
     out.writeString(type);
     out.writeSerializable(taskProgress);
     out.writeParcelable(measurementDesc, flag);
     out.writeMap(values);
-    out.writeString(taskId);
   }
 }

@@ -163,8 +163,6 @@ public class SequentialTask extends MeasurementTask{
         try {
           r = f.get(mt.getDuration()==0?Config.DEFAULT_TASK_DURATION_TIMEOUT*2:mt.getDuration()*2,TimeUnit.MILLISECONDS);
           for(int i=0;i<r.length;i++){//TODO
-            // Hongyi: change taskId
-            r[i].setTaskId(taskId);
             allresults.add(r[i]);
           }
         } catch (TimeoutException e) {

@@ -14,7 +14,6 @@
  */
 package com.mobiperf_library;
 
-import java.util.Calendar;
 import java.util.concurrent.Callable;
 
 import android.content.Intent;
@@ -22,8 +21,6 @@ import android.content.Intent;
 import com.mobiperf_library.MeasurementResult.TaskProgress;
 import com.mobiperf_library.exceptions.MeasurementError;
 import com.mobiperf_library.exceptions.MeasurementSkippedException;
-import com.mobiperf_library.measurements.ParallelTask;
-import com.mobiperf_library.measurements.SequentialTask;
 import com.mobiperf_library.util.Logger;
 import com.mobiperf_library.util.PhoneUtils;
 
@@ -45,14 +42,12 @@ public class ServerMeasurementTask implements Callable<MeasurementResult []> {
     Intent intent = new Intent();
     intent.setAction(UpdateIntent.MEASUREMENT_PROGRESS_UPDATE_ACTION);
     intent.putExtra(UpdateIntent.TASK_STATUS_PAYLOAD, Config.TASK_STARTED);
-//    intent.putExtra(UpdateIntent.TASKID_PAYLOAD, realTask.generateTaskID());
     intent.putExtra(UpdateIntent.TASKID_PAYLOAD, realTask.getTaskId());
+    intent.putExtra(UpdateIntent.TASKKEY_PAYLOAD, realTask.getKey());
     scheduler.sendBroadcast(intent);
   }
 
-//  private void broadcastMeasurementEnd(MeasurementResult result
-//    , MeasurementError error, String clientKey) {
-  private void broadcastMeasurementEnd(MeasurementResult result
+  private void broadcastMeasurementEnd(MeasurementResult[] results
     , MeasurementError error) {
 
     // Only broadcast information about measurements if they are true errors.
@@ -61,54 +56,20 @@ public class ServerMeasurementTask implements Callable<MeasurementResult []> {
       intent.setAction(UpdateIntent.MEASUREMENT_PROGRESS_UPDATE_ACTION);
       intent.putExtra(UpdateIntent.TASK_STATUS_PAYLOAD, Config.TASK_FINISHED);
       intent.putExtra(UpdateIntent.TASK_PRIORITY_PAYLOAD, (int) realTask.getDescription().priority);
-//      intent.putExtra(UpdateIntent.TASKID_PAYLOAD, realTask.generateTaskID());
       intent.putExtra(UpdateIntent.TASKID_PAYLOAD, realTask.getTaskId());
+      intent.putExtra(UpdateIntent.TASKKEY_PAYLOAD, realTask.getKey());
 
-      if (result != null){
-        if(result.getTaskProgress()==TaskProgress.PAUSED){
+      if (results != null){
+        // Hongyi: only single task can be paused
+        if(results[0].getTaskProgress()==TaskProgress.PAUSED){
           intent.putExtra(UpdateIntent.TASK_STATUS_PAYLOAD, Config.TASK_PAUSED);
         }
         else {
           intent.putExtra(UpdateIntent.TASK_STATUS_PAYLOAD, Config.TASK_FINISHED);
-          intent.putExtra(UpdateIntent.RESULT_PAYLOAD, result);
-          //scheduler.sendResultMessage(result, result.getTaskKey(), realTask.getTaskId());
+          intent.putExtra(UpdateIntent.RESULT_PAYLOAD, results);
         }
         scheduler.sendBroadcast(intent);
       }
-
-      
-//      if (result != null){
-//        if(result.getTaskProgress()==TaskProgress.PAUSED){
-//          intent.putExtra(UpdateIntent.TASK_STATUS_PAYLOAD, Config.TASK_PAUSED);
-//        }else if(result.getTaskProgress()==TaskProgress.COMPLETED){
-//          intent.putExtra(UpdateIntent.TASK_STATUS_PAYLOAD, Config.TASK_FINISHED);
-//          scheduler.sendResultMessage(result, result.getTaskKey(), realTask.getTaskId());
-//
-//          // Hongyi: task succeed. return result.
-////          scheduler.sendResultMessage(result, clientKey);
-//        }
-//        else{
-//          intent.putExtra(UpdateIntent.TASK_STATUS_PAYLOAD, Config.TASK_FINISHED);
-//          String errorString = "Measurement " + realTask.getDescriptor() + " has failed";
-//          errorString += "\nTimestamp: " + Calendar.getInstance().getTime();
-//          Logger.e(errorString);
-//          intent.putExtra(UpdateIntent.ERROR_STRING_PAYLOAD, errorString);
-//
-//          // TODO(Hongyi): task is stopped, return partial result?
-//          scheduler.sendResultMessage(null, clientKey);
-//        }
-//      }
-//      else {
-//        intent.putExtra(UpdateIntent.TASK_STATUS_PAYLOAD, Config.TASK_FINISHED);
-//        String errorString = "Measurement " + realTask.getDescriptor() + " has failed";
-//        errorString += "\nTimestamp: " + Calendar.getInstance().getTime();
-//        intent.putExtra(UpdateIntent.ERROR_STRING_PAYLOAD, errorString);
-//
-//        // Hongyi: task failed.
-//        scheduler.sendResultMessage(null, clientKey);
-//      } 
-//
-//      scheduler.sendBroadcast(intent);
     }
 
   }
@@ -127,81 +88,24 @@ public class ServerMeasurementTask implements Callable<MeasurementResult []> {
         Logger.i("Skipping measurement - scheduler paused");
         throw new MeasurementSkippedException("Scheduler paused");
       }
-      //        MeasurementScheduler.this.setCurrentTask(realTask);
       broadcastMeasurementStart();
       try {
         results = realTask.call(); 
-        for(MeasurementResult r: results){
-//          broadcastMeasurementEnd(r, null, realTask.measurementDesc.key);
-          broadcastMeasurementEnd(r, null);
-        }
-        return results;
+        broadcastMeasurementEnd(results, null);
       } catch (MeasurementError e) {
         String error = "Server measurement " + realTask.getDescriptor() 
             + " has failed: " + e.getMessage() + "\n";
-        error += "Timestamp: " + Calendar.getInstance().getTime();
         Logger.e(error);
-
-        if ( realTask.getType().equals(ParallelTask.TYPE) ) {
-          ParallelTask pTask = (ParallelTask)realTask;
-          for ( MeasurementTask t : pTask.getTasks() ) {
-            MeasurementResult result = scheduler.getFailureResult(t, e);
-            // Hongyi: change taskId
-            result.setTaskId(realTask.getTaskId());
-            broadcastMeasurementEnd(result, e);
-          }
-        }
-        else if (realTask.getType().equals(SequentialTask.TYPE)  ) {
-          SequentialTask sTask = (SequentialTask)realTask;
-          for ( MeasurementTask t : sTask.getTasks() ) {
-            MeasurementResult result = scheduler.getFailureResult(t, e);
-            // Hongyi: change taskId
-            result.setTaskId(realTask.getTaskId());
-            broadcastMeasurementEnd(result, e);
-          }
-        }
-        else {
-          MeasurementResult result = scheduler.getFailureResult(realTask, e);
-          broadcastMeasurementEnd(result, e);
-        }       
+        results = MeasurementResult.getFailureResult(realTask, e);
+        broadcastMeasurementEnd(results, e);
         
-//        Logger.e("Got MeasurementError running task: " + e.getMessage());
-//        broadcastMeasurementEnd(null, e, realTask.measurementDesc.key);
-//        throw e;
       } catch (Exception e) {
         String error = "Server measurement " + realTask.getDescriptor() + " has failed\n";
         error += "Unexpected Exception: " + e.getMessage() + "\n";
-        error += "\nTimestamp: " + Calendar.getInstance().getTime();
         Logger.e(error);
-        
 
-        if ( realTask.getType().equals(ParallelTask.TYPE) ) {
-          ParallelTask pTask = (ParallelTask)realTask;
-          for ( MeasurementTask t : pTask.getTasks() ) {
-            MeasurementResult result = scheduler.getFailureResult(t, e);
-            // Hongyi: change taskId
-            result.setTaskId(realTask.getTaskId());
-            broadcastMeasurementEnd(result, new MeasurementError("Got exception running task", e));
-          }
-        }
-        else if (realTask.getType().equals(SequentialTask.TYPE)  ) {
-          SequentialTask sTask = (SequentialTask)realTask;
-          for ( MeasurementTask t : sTask.getTasks() ) {
-            MeasurementResult result = scheduler.getFailureResult(t, e);
-            // Hongyi: change taskId
-            result.setTaskId(realTask.getTaskId());
-            broadcastMeasurementEnd(result, new MeasurementError("Got exception running task", e));
-          }
-        }
-        else {
-          MeasurementResult result = scheduler.getFailureResult(realTask, e);
-          broadcastMeasurementEnd(result, new MeasurementError("Got exception running task", e));
-        }
-        
-//        Logger.e("Got exception running task: " + e.getMessage());
-//        MeasurementError err = new MeasurementError("Got exception running task", e);
-//        broadcastMeasurementEnd(null, err, realTask.measurementDesc.key);
-//        throw err;
+        results = MeasurementResult.getFailureResult(realTask, e);
+        broadcastMeasurementEnd(results, new MeasurementError("Got exception running task", e));
       }
     } finally {
       phoneUtils.releaseWakeLock();

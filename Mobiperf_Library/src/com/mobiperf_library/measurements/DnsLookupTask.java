@@ -184,7 +184,7 @@ public class DnsLookupTask extends MeasurementTask{
       PhoneUtils phoneUtils = PhoneUtils.getPhoneUtils();
       MeasurementResult result = new MeasurementResult(phoneUtils.getDeviceInfo().deviceId,
         phoneUtils.getDeviceProperty(), DnsLookupTask.TYPE, System.currentTimeMillis() * 1000,
-        TaskProgress.COMPLETED, this.measurementDesc, taskId);
+        TaskProgress.COMPLETED, this.measurementDesc);
       result.addResult("address", resultInet.getHostAddress());
       result.addResult("real_hostname", resultInet.getCanonicalHostName());
       result.addResult("time_ms", totalTime / successCnt);
