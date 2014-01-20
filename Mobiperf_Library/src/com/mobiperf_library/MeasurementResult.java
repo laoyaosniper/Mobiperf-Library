@@ -351,6 +351,12 @@ public void addContextResults(ArrayList<HashMap<String, String>> contextResults)
     measurementDesc = in.readParcelable(loader);
     values = in.readHashMap(loader);
     contextResults=in.readArrayList(loader);
+//  int contextArraySize=in.readInt();
+//    contextResults=new ArrayList<HashMap<String,String>>(contextArraySize);
+//    for(int i=0;i<contextArraySize;i++){
+//    	contextResults.add(in.readHashMap(loader));
+//    }
+    
   }
   
   public static final Parcelable.Creator<MeasurementResult> CREATOR
@@ -386,5 +392,11 @@ public void addContextResults(ArrayList<HashMap<String, String>> contextResults)
     out.writeParcelable(measurementDesc, flag);
     out.writeMap(values);
     out.writeList(contextResults);//TODO (Ashkan): check this
+//    out.writeInt(contextResults.size());
+//    for(HashMap<String,String> contextMap: contextResults){
+//    	out.writeMap(contextMap);
+//    }
+    
+    
   }
 }
