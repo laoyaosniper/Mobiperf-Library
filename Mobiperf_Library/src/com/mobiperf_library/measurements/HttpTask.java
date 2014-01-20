@@ -81,7 +81,7 @@ public class HttpTask extends MeasurementTask {
   public HttpTask(MeasurementDesc desc) {
     super(new HttpDesc(desc.key, desc.startTime, desc.endTime, desc.intervalSec,
       desc.count, desc.priority, desc.contextIntervalSec, desc.parameters));
-    this.duration=Config.HTTP_TASK_DURATION;
+    this.duration=Config.DEFAULT_HTTP_TASK_DURATION;
   }
   
   protected HttpTask(Parcel in) {

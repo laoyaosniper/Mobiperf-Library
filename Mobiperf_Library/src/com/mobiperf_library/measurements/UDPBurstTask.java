@@ -14,15 +14,6 @@
  */
 package com.mobiperf_library.measurements;
 
-import com.mobiperf_library.MeasurementDesc;
-import com.mobiperf_library.MeasurementResult;
-import com.mobiperf_library.MeasurementTask;
-import com.mobiperf_library.MeasurementResult.TaskProgress;
-import com.mobiperf_library.exceptions.MeasurementError;
-import com.mobiperf_library.util.Logger;
-import com.mobiperf_library.util.MLabNS;
-import com.mobiperf_library.util.PhoneUtils;
-
 import android.content.Context;
 import android.os.Parcel;
 import android.os.Parcelable;
@@ -38,6 +29,15 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.Map;
 
+import com.mobiperf_library.Config;
+import com.mobiperf_library.MeasurementDesc;
+import com.mobiperf_library.MeasurementResult;
+import com.mobiperf_library.MeasurementTask;
+import com.mobiperf_library.MeasurementResult.TaskProgress;
+import com.mobiperf_library.exceptions.MeasurementError;
+import com.mobiperf_library.util.Logger;
+import com.mobiperf_library.util.MLabNS;
+import com.mobiperf_library.util.PhoneUtils;
 /**
  * 
  * UDPBurstTask provides two types of measurements, Burst Up and Burst Down,
@@ -93,8 +93,9 @@ public class UDPBurstTask extends MeasurementTask {
   private Context context = null;
 
   private static int seq = 1;
-  private long duration;//TODO
+  private long duration;
   private TaskProgress taskProgress;
+  private volatile boolean stopFlag;
 
   /**
    * Encode UDP specific parameters, along with common parameters inherited
@@ -110,13 +111,13 @@ public class UDPBurstTask extends MeasurementTask {
     public String target = null;
     public boolean dirUp = false;
     public int udpInterval = UDPBurstTask.DEFAULT_UDP_INTERVAL;
-    
+
     public UDPBurstDesc(String key, Date startTime, Date endTime,
-        double intervalSec, long count, long priority,
-        int contextIntervalSec, Map<String, String> params)
-        throws InvalidParameterException {
+                        double intervalSec, long count, long priority,
+                        int contextIntervalSec, Map<String, String> params)
+                            throws InvalidParameterException {
       super(UDPBurstTask.TYPE, key, startTime, endTime, intervalSec,
-          count, priority,contextIntervalSec, params);
+        count, priority,contextIntervalSec, params);
       initializeParams(params);
       if (this.target == null || this.target.length() == 0) {
         throw new InvalidParameterException("UDPBurstTask null target");
@@ -236,8 +237,10 @@ public class UDPBurstTask extends MeasurementTask {
 
   public UDPBurstTask(MeasurementDesc desc) {
     super(new UDPBurstDesc(desc.key, desc.startTime, desc.endTime,
-        desc.intervalSec, desc.count, desc.priority, desc.contextIntervalSec, desc.parameters));
+      desc.intervalSec, desc.count, desc.priority, desc.contextIntervalSec, desc.parameters));
     this.taskProgress=TaskProgress.FAILED;
+    this.stopFlag=false;
+    this.duration=Config.DEFAULT_UDPBURST_DURATION;
   }
 
   /**
@@ -247,8 +250,8 @@ public class UDPBurstTask extends MeasurementTask {
   public MeasurementTask clone() {
     MeasurementDesc desc = this.measurementDesc;
     UDPBurstDesc newDesc = new UDPBurstDesc(desc.key, desc.startTime,
-        desc.endTime, desc.intervalSec, desc.count, desc.priority,
-        desc.contextIntervalSec, desc.parameters);
+      desc.endTime, desc.intervalSec, desc.count, desc.priority,
+      desc.contextIntervalSec, desc.parameters);
     return new UDPBurstTask(newDesc);
   }
 
@@ -280,7 +283,7 @@ public class UDPBurstTask extends MeasurementTask {
     public int packetCount;
     public double outOfOrderRatio;
     public long jitter;
-    
+
     public UDPResult () {
       packetCount = 0;
       outOfOrderRatio = 0.0;
@@ -352,7 +355,7 @@ public class UDPBurstTask extends MeasurementTask {
               * ((double)offsetedDelay - offsetedDelay_mean)  / (packetCount - 1);
         }
         jitter = Math.sqrt(jitter);
-        
+
         return (long)jitter;
       }
       else {
@@ -475,6 +478,10 @@ public class UDPBurstTask extends MeasurementTask {
     UDPPacket dataPacket = new UDPPacket();
     // Send burst
     for (int i = 0; i < desc.udpBurstCount; i++) {
+      if(stopFlag){
+        return null;
+      }
+
       dataPacket.type = UDPBurstTask.PKT_DATA;
       dataPacket.burstCount = desc.udpBurstCount;
       dataPacket.packetNum = i;
@@ -495,13 +502,13 @@ public class UDPBurstTask extends MeasurementTask {
       }
       Logger.i("Sent packet pnum:" + i + " to " + desc.target + ": "
           + targetIp);
-      
       // Sleep udpInterval millisecond
       try {
         Thread.sleep(desc.udpInterval);
         Logger.i("UDP Burst sleep " + desc.udpInterval + "ms");
       } catch (InterruptedException e) {
-        Logger.e("Error: sleep interrupted!");
+        Logger.e("UDPBurst -> sendUpBurst got interrupted");
+        return null;
       }
     } // for()
     return sock;
@@ -530,6 +537,10 @@ public class UDPBurstTask extends MeasurementTask {
     byte buffer[] = new byte[UDPBurstTask.MIN_PACKETSIZE];
     DatagramPacket recvpacket = new DatagramPacket(buffer, buffer.length);
 
+    if(stopFlag){
+      return udpResult;
+    }
+    
     try {
       sock.setSoTimeout(RCV_UP_TIMEOUT);
       sock.receive(recvpacket);
@@ -580,6 +591,10 @@ public class UDPBurstTask extends MeasurementTask {
     DatagramPacket packet;
     InetAddress addr = null;
 
+    if(stopFlag){
+      return null;
+    }
+    
     // Resolve the server's name
     try {
       addr = InetAddress.getByName(desc.target);
@@ -604,13 +619,14 @@ public class UDPBurstTask extends MeasurementTask {
     byte[] data = requestPacket.getByteArray();
     packet = new DatagramPacket(data, data.length, addr, desc.dstPort);
 
+    
     try {
       sock.send(packet);
     } catch (IOException e) {
       sock.close();
-      throw new MeasurementError("Error sending " + desc.target);
+      throw new MeasurementError("Error closing Output Stream to:"
+          + desc.target);
     }
-    
     return sock;
   }
 
@@ -631,12 +647,17 @@ public class UDPBurstTask extends MeasurementTask {
     int pktRecv = 0;
     UDPBurstDesc desc = (UDPBurstDesc) measurementDesc;
 
+    // Receive response
+    Logger.i("Waiting for UDP burst from " + desc.target);
     // Reconstruct UDP packet from flattened network data
     byte buffer[] = new byte[desc.packetSizeByte];
     DatagramPacket recvpacket = new DatagramPacket(buffer, buffer.length);
     MetricCalculator metricCalculator = new MetricCalculator(
       desc.udpBurstCount);
     for (int i = 0; i < desc.udpBurstCount; i++) {
+      if(stopFlag){
+        return null;
+      }
       try {
         sock.setSoTimeout(RCV_DOWN_TIMEOUT);
         sock.receive(recvpacket);
@@ -661,7 +682,8 @@ public class UDPBurstTask extends MeasurementTask {
         metricCalculator.addPacket(dataPacket.packetNum, dataPacket.timestamp);
       }
       else {
-        throw new MeasurementError("Error: not a data packet! seq: " + seq);
+        throw new MeasurementError("Error closing input stream from "
+            + desc.target);
       }
     } // for()
 
@@ -689,7 +711,7 @@ public class UDPBurstTask extends MeasurementTask {
     this.taskProgress=TaskProgress.FAILED;
 
     UDPBurstDesc desc = (UDPBurstDesc) measurementDesc;
-    
+
     if (!desc.target.equals(MLabNS.TARGET)) {
       throw new InvalidParameterException("Unknown target " + desc.target +
           " for UDPBurstTask");
@@ -705,19 +727,41 @@ public class UDPBurstTask extends MeasurementTask {
           " for UDPBurstTask");
     }
     Logger.i("Setting target to: " + desc.target);
-    
+
     PhoneUtils phoneUtils = PhoneUtils.getPhoneUtils();
 
     Logger.i("Running UDPBurstTask on " + desc.target);
     try {
       if (desc.dirUp == true) {
         socket = sendUpBurst();
+        if(stopFlag){
+          MeasurementResult result = new MeasurementResult(
+            phoneUtils.getDeviceInfo().deviceId,
+            phoneUtils.getDeviceProperty(), UDPBurstTask.TYPE,
+            System.currentTimeMillis() * 1000, TaskProgress.FAILED,
+            this.measurementDesc);
+          MeasurementResult[] mrArray= new MeasurementResult[1];
+          mrArray[0]=result;
+          return mrArray; 
+        }
+          
         udpResult = recvUpResponse(socket);
         pktrecv = udpResult.packetCount;
         response = pktrecv / (float) desc.udpBurstCount;
         this.taskProgress=TaskProgress.COMPLETED;
       } else {
         socket = sendDownRequest();
+        if(stopFlag){
+          MeasurementResult result = new MeasurementResult(
+            phoneUtils.getDeviceInfo().deviceId,
+            phoneUtils.getDeviceProperty(), UDPBurstTask.TYPE,
+            System.currentTimeMillis() * 1000, TaskProgress.FAILED,
+            this.measurementDesc);
+          MeasurementResult[] mrArray= new MeasurementResult[1];
+          mrArray[0]=result;
+          return mrArray;
+        }
+        
         udpResult = recvDownResponse(socket);
         pktrecv = udpResult.packetCount;
         response = pktrecv / (float) desc.udpBurstCount;
@@ -735,11 +779,11 @@ public class UDPBurstTask extends MeasurementTask {
     }
 
     MeasurementResult result = new MeasurementResult(
-        phoneUtils.getDeviceInfo().deviceId,
-        phoneUtils.getDeviceProperty(), UDPBurstTask.TYPE,
-        System.currentTimeMillis() * 1000, this.taskProgress,
-        this.measurementDesc);
-    
+      phoneUtils.getDeviceInfo().deviceId,
+      phoneUtils.getDeviceProperty(), UDPBurstTask.TYPE,
+      System.currentTimeMillis() * 1000, this.taskProgress,
+      this.measurementDesc);
+
 
     result.addResult("target_ip", targetIp);
     result.addResult("loss_ratio", 1.0 - response);  
@@ -748,7 +792,7 @@ public class UDPBurstTask extends MeasurementTask {
     MeasurementResult[] mrArray= new MeasurementResult[1];
     mrArray[0]=result;
     return mrArray;
-    
+
   }
 
   @Override
@@ -764,17 +808,8 @@ public class UDPBurstTask extends MeasurementTask {
     return UDPBurstTask.DESCRIPTOR;
   }
 
-  
 
-  /**
-   * Stop the measurement, even when it is running. Should release all
-   * acquired resource in this function. There should not be side effect if
-   * the measurement has not started or is already finished.
-   */
-  @Override
-  public boolean stop() {//TODO
-    return false;
-  }
+
 
   /**
    * This will be printed to the device log console. Make sure it's well
@@ -797,15 +832,28 @@ public class UDPBurstTask extends MeasurementTask {
     return resp;
   }
 
-@Override
-public long getDuration() {
-	// TODO Auto-generated method stub
-	return 0;
-}
+  @Override
+  public long getDuration() {
+    return this.duration;
+  }
 
-@Override
-public void setDuration(long newDuration) {
-	// TODO Auto-generated method stub
-	
-}
+  @Override
+  public void setDuration(long newDuration) {
+    if(newDuration<0){
+      this.duration=0;
+    }else{
+      this.duration=newDuration;
+    }
+
+  }
+  /**
+   * Stop the measurement, even when it is running. Should release all
+   * acquired resource in this function. There should not be side effect if
+   * the measurement has not started or is already finished.
+   */
+  @Override
+  public boolean stop() {
+    stopFlag=true;
+    return true;
+  }
 }

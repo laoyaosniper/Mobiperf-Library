@@ -598,18 +598,6 @@ public class TracerouteTask extends MeasurementTask  implements PreemptibleMeasu
 		}  
 	}
 
-	//  @Override
-	//  public void pause() {
-	//    // TODO Auto-generated method stub
-	//
-	//  }
-	//
-	//  @Override
-	//  public void resume() {
-	//    // TODO Auto-generated method stub
-	//
-	//  }
-
 	@Override
 	public long getDuration() {
 		return this.duration;
@@ -631,7 +619,7 @@ public class TracerouteTask extends MeasurementTask  implements PreemptibleMeasu
 	}
 
 	@Override
-	public boolean stop() {//TODO
+	public boolean stop() {
 		stopFlag=true;
 		cleanUp(pingProc);
 		return true;

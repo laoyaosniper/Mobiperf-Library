@@ -25,10 +25,6 @@ import android.os.Parcel;
 import android.os.Parcelable;
 import android.util.StringBuilderPrinter;
 
-import java.util.ArrayList;
-import java.util.Formatter;
-import java.util.HashMap;
-
 import com.mobiperf_library.measurements.DnsLookupTask;
 import com.mobiperf_library.measurements.ParallelTask;
 import com.mobiperf_library.measurements.DnsLookupTask.DnsLookupDesc;
@@ -392,8 +388,8 @@ public class MeasurementResult implements Parcelable {
     }
   }
 
-  private void getUDPBurstResult(StringBuilderPrinter printer
-                                 , HashMap<String, String> values) {
+  private void getUDPBurstResult(StringBuilderPrinter printer,
+                                 HashMap<String, String> values) {
     UDPBurstDesc desc = (UDPBurstDesc) measurementDesc;
     if (desc.dirUp) {
       printer.println("[UDPBurstUp]");
