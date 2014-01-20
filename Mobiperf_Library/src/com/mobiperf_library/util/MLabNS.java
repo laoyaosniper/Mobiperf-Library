@@ -78,8 +78,6 @@ public class MLabNS {
         url += "&address_family=" + address_family;
       }
       HttpGet request = new HttpGet(url);
-      request.setHeader("User-Agent", Util.prepareUserAgent());//TODO context removed
-      Logger.e(url);
       request.setHeader("User-Agent", Util.prepareUserAgent());
       HttpResponse response = httpClient.execute(request);
       if (response.getStatusLine().getStatusCode() != 200) {
