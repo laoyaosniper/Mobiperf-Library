@@ -20,12 +20,15 @@ import com.mobiperf_library.MeasurementResult;
 import com.mobiperf_library.MeasurementTask;
 import com.mobiperf_library.MeasurementResult.TaskProgress;
 import com.mobiperf_library.exceptions.MeasurementError;
+import com.mobiperf_library.measurements.UDPBurstTask.UDPBurstDesc;
 import com.mobiperf_library.util.Logger;
 import com.mobiperf_library.util.MLabNS;
 import com.mobiperf_library.util.MeasurementJsonConvertor;
 import com.mobiperf_library.util.PhoneUtils;
 
 import android.content.Context;
+import android.os.Parcel;
+import android.os.Parcelable;
 
 /**
  * @author Haokun Luo
@@ -134,11 +137,16 @@ public class TCPThroughputTask extends MeasurementTask {
 			if (params == null) {
 				return;
 			}
-
-			this.target = params.get("target");
-
+			
 			try {
 				String readVal = null;
+				if ( (readVal = params.get("target")) != null ) {
+		          this.target = params.get("target");
+				}
+				else {
+				  this.target = MLabNS.TARGET;
+				}
+				
 				if ((readVal = params.get("data_limit_mb_down")) != null && readVal.length() > 0 
 						&& Integer.parseInt(readVal) > 0) {
 					this.data_limit_mb_down = Double.parseDouble(readVal);
@@ -239,6 +247,51 @@ public class TCPThroughputTask extends MeasurementTask {
 			}
 			return result;
 		}
+		
+	    protected TCPThroughputDesc(Parcel in) {
+	      super(in);
+	      data_limit_mb_up = in.readDouble();
+	      data_limit_mb_down = in.readDouble();
+          dir_up = in.readByte() != 0;
+          duration_period_sec = in.readDouble();
+          pkt_size_up_bytes = in.readInt();
+          sample_period_sec = in.readDouble();
+          slow_start_period_sec = in.readDouble();
+	      target = in.readString();
+	      tcp_timeout_sec = in.readDouble();
+	    }
+
+	    public static final Parcelable.Creator<UDPBurstDesc> CREATOR
+	    = new Parcelable.Creator<UDPBurstDesc>() {
+	      public UDPBurstDesc createFromParcel(Parcel in) {
+	        return new UDPBurstDesc(in);
+	      }
+
+	      public UDPBurstDesc[] newArray(int size) {
+	        return new UDPBurstDesc[size];
+	      }
+	    };
+
+	    @Override
+	    public int describeContents() {
+	      return super.describeContents();
+	    }
+	    
+	    @Override
+	    public void writeToParcel(Parcel dest, int flags) {
+	      super.writeToParcel(dest, flags);
+	      dest.writeDouble(data_limit_mb_up);
+	      dest.writeDouble(data_limit_mb_down);
+	      dest.writeByte((byte) (dir_up ? 1 : 0));
+	      dest.writeDouble(duration_period_sec);
+	      dest.writeInt(pkt_size_up_bytes);
+	      dest.writeDouble(sample_period_sec);
+	      dest.writeDouble(slow_start_period_sec);
+          dest.writeString(target);
+	      dest.writeDouble(tcp_timeout_sec);
+	    }
+	    
+	    
 	}
 
 	/**

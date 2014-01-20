@@ -47,8 +47,12 @@ import com.mobiperf_library.measurements.HttpTask;
 import com.mobiperf_library.measurements.HttpTask.HttpDesc;
 import com.mobiperf_library.measurements.SequentialTask;
 import com.mobiperf_library.measurements.SequentialTask.SequentialDesc;
+import com.mobiperf_library.measurements.TCPThroughputTask;
+import com.mobiperf_library.measurements.TCPThroughputTask.TCPThroughputDesc;
 import com.mobiperf_library.measurements.TracerouteTask;
 import com.mobiperf_library.measurements.TracerouteTask.TracerouteDesc;
+import com.mobiperf_library.measurements.UDPBurstTask;
+import com.mobiperf_library.measurements.UDPBurstTask.UDPBurstDesc;
 import com.mobiperf_library.util.Logger;
 
 /**
@@ -69,15 +73,6 @@ public abstract class API {
   
   public final static int Parallel = 101;
   public final static int Sequential = 102;
-  
-//  public static String DNS_LOOK_UP = "DNS_LOOK_UP";
-//  public static String HTTP = "HTTP";
-//  public static String PING = "PING";
-//  public static String TRACEROUTE = "TRACEROUTE";
-//  public static String TCP_THROUGHPUT = "TCP_THROUGHPUT";
-//  public static String UDP_BURST = "UDP_BURST";
-//  public static String PARALLEL = "PARALLEL";
-//  public static String SEQUENTIAL = "SEQUENTIAL";
 
   private Context parent;
   
@@ -236,6 +231,14 @@ public abstract class API {
         break;
       case API.Traceroute:
         task = new TracerouteTask(new TracerouteDesc(clientKey, startTime, endTime
+          , intervalSec, count, priority, contextIntervalSec, params));
+        break;
+      case API.TCPThroughput:
+        task = new TCPThroughputTask(new TCPThroughputDesc(clientKey, startTime, endTime
+          , intervalSec, count, priority, contextIntervalSec, params));
+        break;
+      case API.UDPBurst:
+        task = new UDPBurstTask(new UDPBurstDesc(clientKey, startTime, endTime
           , intervalSec, count, priority, contextIntervalSec, params));
         break;
       default:

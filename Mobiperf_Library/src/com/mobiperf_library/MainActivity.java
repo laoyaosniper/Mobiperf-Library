@@ -10,7 +10,6 @@ import com.mobiperf_library.MeasurementTask;
 import com.mobiperf_library.R;
 
 import com.mobiperf_library.api.API;
-import com.mobiperf_library.api.TaskParams;
 import com.mobiperf_library.exceptions.MeasurementError;
 import com.mobiperf_library.util.Logger;
 
@@ -83,8 +82,8 @@ public class MainActivity extends Activity {
         ArrayList<MeasurementTask> taskList = new ArrayList<MeasurementTask>();
         switch (counter % 5) {   
           case 0:
-            taskType = API.HTTP;
-            params.put("url","www.google.com");
+            taskType = API.UDPBurst;
+            //params.put("target","www.google.com");
             //endTime = new Date(System.currentTimeMillis() + 5000L);
             priority = MeasurementTask.INVALID_PRIORITY;
 
@@ -99,8 +98,8 @@ public class MainActivity extends Activity {
               // TODO Auto-generated catch block
               e.printStackTrace();
             }
-            taskType = API.DNSLookup;
-            params.put("target","www.google.com");
+            taskType = API.TCPThroughput;
+            //params.put("target","www.google.com");
             //endTime = new Date(System.currentTimeMillis() + 5000L);
             task = libraryAPI.createTask(taskType
               , Calendar.getInstance().getTime(), endTime, 120, 1
@@ -151,7 +150,7 @@ public class MainActivity extends Activity {
               , priority, 1,  params, taskList);
             break;   
           case 4:
-            taskType = TaskParams.Ping;
+            taskType = API.Ping;
             params.put("target","www.google.com");
             endTime = new Date(System.currentTimeMillis() + 5000L);
 
