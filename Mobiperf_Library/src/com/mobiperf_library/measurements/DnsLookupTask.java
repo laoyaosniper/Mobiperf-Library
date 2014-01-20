@@ -116,7 +116,7 @@ public class DnsLookupTask extends MeasurementTask{
   public DnsLookupTask(MeasurementDesc desc) {
     super(new DnsLookupDesc(desc.key, desc.startTime, desc.endTime, desc.intervalSec,
       desc.count, desc.priority, desc.contextIntervalSec, desc.parameters));
-    this.duration=Config.DNS_TASK_DURATION;
+    this.duration=Config.DEFAULT_DNS_TASK_DURATION;
   }
   
   protected DnsLookupTask(Parcel in) {
