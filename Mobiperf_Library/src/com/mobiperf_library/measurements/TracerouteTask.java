@@ -431,14 +431,18 @@ public class TracerouteTask extends MeasurementTask  implements PreemptibleMeasu
 			stopFlag=false;
 			pauseFlag=false;
 			hopHosts.clear();
-			PhoneUtils phoneUtils = PhoneUtils.getPhoneUtils();
-			result = new MeasurementResult(phoneUtils.getDeviceInfo().deviceId,//TODO null? 
-					phoneUtils.getDeviceProperty(), TracerouteTask.TYPE, 
-					System.currentTimeMillis() * 1000, taskProgress, this.measurementDesc);
-			Logger.i(MeasurementJsonConvertor.toJsonString(result));
-			MeasurementResult[] mrArray= new MeasurementResult[1];
-			mrArray[0]=result;
-			return mrArray;
+//			PhoneUtils phoneUtils = PhoneUtils.getPhoneUtils();
+//			result = new MeasurementResult(phoneUtils.getDeviceInfo().deviceId,//TODO null? 
+//					phoneUtils.getDeviceProperty(), TracerouteTask.TYPE, 
+//					System.currentTimeMillis() * 1000, taskProgress, this.measurementDesc);
+//			Logger.i(MeasurementJsonConvertor.toJsonString(result));
+//			MeasurementResult[] mrArray= new MeasurementResult[1];
+//			mrArray[0]=result;
+//			return mrArray;
+            MeasurementResult[] mrArray =
+                MeasurementResult.getFailureResult(this, new MeasurementError("cancelled"));
+            Logger.i(MeasurementJsonConvertor.toJsonString(mrArray[0]));
+            return mrArray;
 
 		}
 

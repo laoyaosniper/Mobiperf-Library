@@ -14,20 +14,11 @@
  */
 package com.mobiperf_library;
 
-import java.security.InvalidParameterException;
-
-import com.mobiperf_library.api.TaskParams;
-import com.mobiperf_library.measurements.DnsLookupTask;
-import com.mobiperf_library.measurements.HttpTask;
-import com.mobiperf_library.measurements.PingTask;
-import com.mobiperf_library.measurements.TracerouteTask;
 import com.mobiperf_library.util.Logger;
 
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
-import android.os.Messenger;
-import android.os.RemoteException;
 
 /**
  * @author Hongyi Yao
@@ -47,10 +38,7 @@ public class APIRequestHandler extends Handler {
     data.setClassLoader(scheduler.getClassLoader());
     String clientKey = data.getString("clientKey");
 
-    int id, taskType;
     MeasurementTask task;
-    MeasurementDesc desc;
-    Messenger messenger;
     String taskId = null;
     switch (msg.what) {
       case Config.MSG_REGISTER_CLIENT:
@@ -72,65 +60,22 @@ public class APIRequestHandler extends Handler {
         }
         break;
       case Config.MSG_SUBMIT_TASK:
-        id = msg.arg1;
-        taskType = msg.arg2;
         task = null;
-//        desc = (MeasurementDesc) data.getParcelable("measurementDesc");
-//        if ( desc != null ) {
-//          switch (taskType) {
-//            case TaskParams.DNSLookup:  task = new DnsLookupTask(desc);  break;
-//            case TaskParams.HTTP:       task = new HttpTask(desc);       break;
-//            case TaskParams.Ping:       task = new PingTask(desc);       break;
-//            case TaskParams.Traceroute: task = new TracerouteTask(desc); break;
-//            default:
-//              throw new InvalidParameterException("Unknown measurement type");
-//          }
-//        }
-//        else {
-//          Logger.e("MeasurementDesc not found!");
-//        }
         task = (MeasurementTask) data.getParcelable("measurementTask");
         if ( task != null ) {
-          Logger.d("Hongyi: Add new task!");
+          Logger.d("Hongyi: Add new task! taskId " + task.getTaskId());
+          
+//          // Hongyi: for test
+//          task.measurementDesc.parameters.put("secondTimestamp", String.valueOf(System.currentTimeMillis()));
+          
           taskId = scheduler.submitTask(task);
-          messenger = scheduler.getClientsMap().get(task.measurementDesc.key);
-          Logger.d("Get submit task message! key = " + id);
-          if ( messenger != null ) {          
-            int pid = android.os.Process.myPid();
-            Message replyMsg = Message.obtain(null, Config.MSG_SUBMIT_TASK, id, pid, null);
-            Bundle sendData = new Bundle();
-            sendData.putString("taskId", taskId);
-            replyMsg.setData(sendData);
-            try {
-              messenger.send(replyMsg);
-            } catch (RemoteException e) {
-            }
-          }
-        }
-        else {
-          // TODO(Hongyi): handle this case
         }
         break;
       case Config.MSG_CANCEL_TASK:
         taskId = data.getString("taskId");
-        Logger.d("taskId: " + taskId);
-        messenger = scheduler.getClientsMap().get(clientKey);
-        if ( messenger != null ) {
-          Message replyMsg = Message.obtain(null, Config.MSG_CANCEL_TASK);
-
-          Bundle sendData = new Bundle();
-          if ( scheduler.cancelTask(taskId, clientKey) == true ) {
-            replyMsg.arg1 = 1;
-          }
-          else {
-            replyMsg.arg1 = 0;
-          }
-          sendData.putString("taskId", taskId);
-          replyMsg.setData(sendData);
-          try {
-            messenger.send(replyMsg);
-          } catch (RemoteException e) {
-          }
+        if ( taskId != null && clientKey != null ) {
+          Logger.d("cancel taskId: " + taskId + ", clientKey: " + clientKey);
+          scheduler.cancelTask(taskId, clientKey);
         }
         break;
       default:

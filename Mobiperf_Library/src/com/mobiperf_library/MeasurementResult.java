@@ -134,7 +134,8 @@ public void addContextResults(ArrayList<HashMap<String, String>> contextResults)
         System.currentTimeMillis() * 1000,
         TaskProgress.FAILED,
         task.measurementDesc);
-      r.addResult("error", error.toString() + "\n" + getStackTrace(error));
+//      r.addResult("error", error.toString() + "\n" + getStackTrace(error));
+      r.addResult("error", error.toString());
       results.add(r);
     }
     return results.toArray(new MeasurementResult[results.size()]);
@@ -197,6 +198,21 @@ public void addContextResults(ArrayList<HashMap<String, String>> contextResults)
     Formatter format = new Formatter();
 //    String results=getContextResult();
     try {
+
+//      // Hongyi: for test
+//      String tss1 = measurementDesc.parameters.get("firstTimestamp");
+//      String tss2 = measurementDesc.parameters.get("secondTimestamp");
+//      long ts1 = 0, ts2 = 0;
+//      if ( tss1 != null ) {
+//        ts1 = Long.parseLong(tss1);
+//      }
+//      if ( tss2 != null ) {
+//        ts2 = Long.parseLong(tss2);
+//      }
+//      printer.println("haha");
+//      printer.println("ts1 = " + ts1 + ", ts2 = " + ts2);
+//      printer.println("Delay of API to Scheduler: " + (ts2 - ts1));
+      
       if (type.equals(PingTask.TYPE)) {
         getPingResult(printer, values);
       } else if (type.equals(HttpTask.TYPE)) {
