@@ -2,29 +2,19 @@ package com.mobiperf_library;
 
 
 import java.io.InvalidClassException;
-import java.io.PrintWriter;
-import java.io.StringWriter;
-import java.io.Writer;
-import java.math.BigInteger;
-import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.Set;
 import java.util.concurrent.Callable;
 
-import com.mobiperf_library.MeasurementResult.TaskProgress;
 import com.mobiperf_library.exceptions.MeasurementError;
 import com.mobiperf_library.measurements.DnsLookupTask;
 import com.mobiperf_library.measurements.HttpTask;
 import com.mobiperf_library.measurements.PingTask;
-import com.mobiperf_library.measurements.TestTask;
+import com.mobiperf_library.measurements.TCPThroughputTask;
 import com.mobiperf_library.measurements.TracerouteTask;
-import com.mobiperf_library.util.Logger;
-import com.mobiperf_library.util.PhoneUtils;
-import com.mobiperf_library.util.Util;
+import com.mobiperf_library.measurements.UDPBurstTask;
 
-import android.content.Context;
 import android.os.Parcel;
 import android.os.Parcelable;
 
@@ -53,8 +43,10 @@ public abstract class MeasurementTask implements Callable<MeasurementResult[]>, 
     measurementDescToType.put(TracerouteTask.DESCRIPTOR, TracerouteTask.TYPE);
     measurementTypes.put(DnsLookupTask.TYPE, DnsLookupTask.class);
     measurementDescToType.put(DnsLookupTask.DESCRIPTOR, DnsLookupTask.TYPE);
-    //      measurementTypes.put(TCPThroughputTask.TYPE, TCPThroughputTask.class);
-    //      measurementDescToType.put(TCPThroughputTask.DESCRIPTOR, TCPThroughputTask.TYPE);
+    measurementTypes.put(TCPThroughputTask.TYPE, TCPThroughputTask.class);
+    measurementDescToType.put(TCPThroughputTask.DESCRIPTOR, TCPThroughputTask.TYPE);
+    measurementTypes.put(UDPBurstTask.TYPE, UDPBurstTask.class);
+    measurementDescToType.put(UDPBurstTask.DESCRIPTOR, UDPBurstTask.TYPE);
   }
 
   /**

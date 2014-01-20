@@ -25,10 +25,6 @@ import android.os.Parcel;
 import android.os.Parcelable;
 import android.util.StringBuilderPrinter;
 
-import java.util.ArrayList;
-import java.util.Formatter;
-import java.util.HashMap;
-
 import com.mobiperf_library.measurements.DnsLookupTask;
 import com.mobiperf_library.measurements.ParallelTask;
 import com.mobiperf_library.measurements.DnsLookupTask.DnsLookupDesc;
@@ -37,8 +33,12 @@ import com.mobiperf_library.measurements.HttpTask.HttpDesc;
 import com.mobiperf_library.measurements.PingTask;
 import com.mobiperf_library.measurements.PingTask.PingDesc;
 import com.mobiperf_library.measurements.SequentialTask;
+import com.mobiperf_library.measurements.TCPThroughputTask;
+import com.mobiperf_library.measurements.TCPThroughputTask.TCPThroughputDesc;
 import com.mobiperf_library.measurements.TracerouteTask;
 import com.mobiperf_library.measurements.TracerouteTask.TracerouteDesc;
+import com.mobiperf_library.measurements.UDPBurstTask;
+import com.mobiperf_library.measurements.UDPBurstTask.UDPBurstDesc;
 import com.mobiperf_library.util.Logger;
 import com.mobiperf_library.util.MeasurementJsonConvertor;
 import com.mobiperf_library.util.PhoneUtils;
@@ -221,19 +221,15 @@ public void addContextResults(ArrayList<HashMap<String, String>> contextResults)
         getDnsResult(printer, values);
       } else if (type.equals(TracerouteTask.TYPE)) {
         getTracerouteResult(printer, values);
-      }
-      // else if (type.equals(UDPBurstTask.TYPE)) {
-      // getUDPBurstResult(printer, values);
-      // } else if (type.equals(TCPThroughputTask.TYPE)) {
-      // getTCPThroughputResult(printer, values);
-      // }
-      else if ( type.equals(ParallelTask.TYPE)) {
+      } else if (type.equals(UDPBurstTask.TYPE)) {
+        getUDPBurstResult(printer, values);
+      } else if (type.equals(TCPThroughputTask.TYPE)) {
+        getTCPThroughputResult(printer, values);
+      } else if ( type.equals(ParallelTask.TYPE)) {
         getParallelResult(printer, values);
-      }
-      else if ( type.equals(SequentialTask.TYPE)) {
+      } else if ( type.equals(SequentialTask.TYPE)) {
         getSequentialResult(printer, values);
-      }
-      else {
+      } else {
         Logger.e("Failed to get results for unknown measurement type "
             + type);
       }
@@ -415,69 +411,69 @@ public void addContextResults(ArrayList<HashMap<String, String>> contextResults)
     }
   }
 
-  // private void getUDPBurstResult(StringBuilderPrinter printer,
-  // HashMap<String, String> values) {
-  // UDPBurstDesc desc = (UDPBurstDesc) parameters;
-  // if (desc.dirUp) {
-  // printer.println("[UDPBurstUp]");
-  // } else {
-  // printer.println("[UDPBurstDown]");
-  // }
-  // printer.println("Target: " + desc.target);
-  // printer.println("IP addr: " + values.get("target_ip"));
-  // if (success) {
-  // printer.println("PRR: " + values.get("PRR"));
-  // printer.println("Timestamp: " +
-  // Util.getTimeStringFromMicrosecond(properties.timestamp));
-  // printIPTestResult(printer);
-  // } else {
-  // printer.println("Failed");
-  // }
-  // }
+  private void getUDPBurstResult(StringBuilderPrinter printer,
+                                 HashMap<String, String> values) {
+    UDPBurstDesc desc = (UDPBurstDesc) measurementDesc;
+    if (desc.dirUp) {
+      printer.println("[UDPBurstUp]");
+    } else {
+      printer.println("[UDPBurstDown]");
+    }
+    printer.println("Target: " + desc.target);
+    printer.println("IP addr: " + values.get("target_ip"));
+    if (success) {
+      printer.println("PRR: " + values.get("PRR"));
+      printer.println("Timestamp: " +
+          Util.getTimeStringFromMicrosecond(properties.timestamp));
+      printIPTestResult(printer);
+    } else {
+      printer.println("Failed");
+    }
+  }
 
-  // private void getTCPThroughputResult(StringBuilderPrinter printer,
-  // HashMap<String, String> values) {
-  // TCPThroughputDesc desc = (TCPThroughputDesc) parameters;
-  // if (desc.dir_up) {
-  // printer.println("[TCP Uplink]");
-  // } else {
-  // printer.println("[TCP Downlink]");
-  // }
-  // printer.println("Target: " + desc.target);
-  // printer.println("Timestamp: " +
-  // Util.getTimeStringFromMicrosecond(properties.timestamp));
-  // printIPTestResult(printer);
-  //
-  // if (success) {
-  // printer.println("");
-  // // Display result with precision up to 2 digit
-  // String speedInJSON = values.get("tcp_speed_results");
-  // String dataLimitExceedInJSON = values.get("data_limit_exceeded");
-  // String displayResult = "";
-  //
-  // double tp = desc.calMedianSpeedFromTCPThroughputOutput(speedInJSON);
-  // double KB = Math.pow(2, 10);
-  // if (tp < 0) {
-  // displayResult = "No results available.";
-  // } else if (tp > KB*KB) {
-  // displayResult = "Speed: " + String.format("%.2f",tp/(KB*KB)) + " Gbps";
-  // } else if (tp > KB ) {
-  // displayResult = "Speed: " + String.format("%.2f",tp/KB) + " Mbps";
-  // } else {
-  // displayResult = "Speed: " + String.format("%.2f", tp) + " Kbps";
-  // }
-  //
-  // // Append notice for exceeding data limit
-  // if (dataLimitExceedInJSON.equals("true")) {
-  // displayResult += "\n* Task finishes earlier due to exceeding " +
-  // "maximum number of "+ ((desc.dir_up) ? "transmitted" : "received") +
-  // " bytes";
-  // }
-  // printer.println(displayResult);
-  // } else {
-  // printer.println("Failed");
-  // }
-  // }
+  private void getTCPThroughputResult(StringBuilderPrinter printer,
+                                      HashMap<String, String> values) {
+    TCPThroughputDesc desc = (TCPThroughputDesc) measurementDesc;
+    if (desc.dir_up) {
+      printer.println("[TCP Uplink]");
+    } else {
+      printer.println("[TCP Downlink]");
+    }
+    printer.println("Target: " + desc.target);
+    printer.println("Timestamp: " +
+        Util.getTimeStringFromMicrosecond(properties.timestamp));
+    printIPTestResult(printer);
+
+    if (success) {
+      printer.println("");
+      // Display result with precision up to 2 digit
+      String speedInJSON = values.get("tcp_speed_results");
+      String dataLimitExceedInJSON = values.get("data_limit_exceeded");
+      String displayResult = "";
+
+      double tp = desc.calMedianSpeedFromTCPThroughputOutput(speedInJSON);
+      double KB = Math.pow(2, 10);
+      if (tp < 0) {
+        displayResult = "No results available.";
+      } else if (tp > KB*KB) {
+        displayResult = "Speed: " + String.format("%.2f",tp/(KB*KB)) + " Gbps";
+      } else if (tp > KB ) {
+        displayResult = "Speed: " + String.format("%.2f",tp/KB) + " Mbps";
+      } else {
+        displayResult = "Speed: " + String.format("%.2f", tp) + " Kbps";
+      }
+
+      // Append notice for exceeding data limit
+      if (dataLimitExceedInJSON.equals("true")) {
+        displayResult += "\n* Task finishes earlier due to exceeding " +
+            "maximum number of "+ ((desc.dir_up) ? "transmitted" : "received") +
+            " bytes";
+      }
+      printer.println(displayResult);
+    } else {
+      printer.println("Failed");
+    }
+  }
 
   /**
    * Removes the quotes surrounding the string. If |str| is null, returns
