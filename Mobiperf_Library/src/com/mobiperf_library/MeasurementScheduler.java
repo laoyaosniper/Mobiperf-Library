@@ -440,7 +440,6 @@ public class MeasurementScheduler extends Service{
   }
   
   public synchronized boolean cancelTask(String taskId, String clientKey){
-    // Hongyi: should ensure taskId is not null 
     
     if(taskId != null && idToClientKey.containsKey(taskId)){
       if(idToClientKey.get(taskId).equals(clientKey)){
