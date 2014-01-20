@@ -308,7 +308,7 @@ public abstract class API {
     if ( messenger != null ) {
       Message msg = Message.obtain(null, Config.MSG_CANCEL_TASK);      
       Bundle data = new Bundle();
-      Logger.e("CAAAAAAAAAAAAAACEL task " + taskId);
+      Logger.d("API: CANCEL task " + taskId);
       data.putString("taskId", taskId);
       data.putString("clientKey", clientKey);
       msg.setData(data);  

@@ -21,7 +21,6 @@ import com.mobiperf_library.MeasurementResult;
 import com.mobiperf_library.MeasurementTask;
 import com.mobiperf_library.MeasurementResult.TaskProgress;
 import com.mobiperf_library.exceptions.MeasurementError;
-import com.mobiperf_library.measurements.UDPBurstTask.UDPBurstDesc;
 import com.mobiperf_library.util.Logger;
 import com.mobiperf_library.util.MLabNS;
 import com.mobiperf_library.util.MeasurementJsonConvertor;
@@ -135,14 +134,58 @@ public class TCPThroughputTask extends MeasurementTask {
         throw new InvalidParameterException("TCPThroughputTask null target");
       }
     }
+    
+    protected TCPThroughputDesc(Parcel in) {
+      super(in);
+      data_limit_mb_up = in.readDouble();
+      data_limit_mb_down = in.readDouble();
+      dir_up = in.readByte() != 0;
+      duration_period_sec = in.readDouble();
+      pkt_size_up_bytes = in.readInt();
+      sample_period_sec = in.readDouble();
+      slow_start_period_sec = in.readDouble();
+      target = in.readString();
+      tcp_timeout_sec = in.readDouble();
+    }
 
+    public static final Parcelable.Creator<TCPThroughputDesc> CREATOR
+    = new Parcelable.Creator<TCPThroughputDesc>() {
+      public TCPThroughputDesc createFromParcel(Parcel in) {
+        return new TCPThroughputDesc(in);
+      }
+
+      public TCPThroughputDesc[] newArray(int size) {
+        return new TCPThroughputDesc[size];
+      }
+    };
+
+    @Override
+    public int describeContents() {
+      return super.describeContents();
+    }
+    
+    @Override
+    public void writeToParcel(Parcel dest, int flags) {
+      super.writeToParcel(dest, flags);
+      dest.writeDouble(data_limit_mb_up);
+      dest.writeDouble(data_limit_mb_down);
+      dest.writeByte((byte) (dir_up ? 1 : 0));
+      dest.writeDouble(duration_period_sec);
+      dest.writeInt(pkt_size_up_bytes);
+      dest.writeDouble(sample_period_sec);
+      dest.writeDouble(slow_start_period_sec);
+      dest.writeString(target);
+      dest.writeDouble(tcp_timeout_sec);
+    }
+    
     @Override
     protected void initializeParams(Map<String, String> params) {
       if (params == null) {
         return;
       }
-
-      this.target = params.get("target");
+      if ( (target = params.get("target")) == null ) {
+        target = MLabNS.TARGET;
+      }
 
       try {
         String readVal = null;
@@ -340,14 +383,7 @@ public class TCPThroughputTask extends MeasurementTask {
       if (desc.dir_up == true) {
         uplink();
         if(stopFlag){
-          MeasurementResult result = new MeasurementResult(
-            phoneUtils.getDeviceInfo().deviceId,
-            phoneUtils.getDeviceProperty(), TCPThroughputTask.TYPE,
-            System.currentTimeMillis() * 1000, TaskProgress.FAILED,
-            this.measurementDesc);
-          MeasurementResult[] mrArray= new MeasurementResult[1];
-          mrArray[0]=result;
-          return mrArray;
+          throw new MeasurementError("Cancelled");
         }
         Logger.i("Uplink measurement result is:");
       }
@@ -355,14 +391,7 @@ public class TCPThroughputTask extends MeasurementTask {
         this.taskStartTime = System.currentTimeMillis();
         downlink();
         if(stopFlag){
-          MeasurementResult result = new MeasurementResult(
-            phoneUtils.getDeviceInfo().deviceId,
-            phoneUtils.getDeviceProperty(), TCPThroughputTask.TYPE,
-            System.currentTimeMillis() * 1000, TaskProgress.FAILED,
-            this.measurementDesc);
-          MeasurementResult[] mrArray= new MeasurementResult[1];
-          mrArray[0]=result;
-          return mrArray;
+          throw new MeasurementError("Cancelled");
         }
         Logger.i("Downlink measurement result is:");
       }
@@ -478,7 +507,7 @@ public class TCPThroughputTask extends MeasurementTask {
       do {
 
         if(stopFlag){
-          return;
+          throw new MeasurementError("Cancelled");
         }
 
         oStream.write(uplinkBuffer, 0, uplinkBuffer.length);
@@ -566,7 +595,7 @@ public class TCPThroughputTask extends MeasurementTask {
       do {
 
         if(stopFlag){
-          return;
+          throw new MeasurementError("Cancelled");
         }
 
         read_bytes = iStream.read(buffer, 0, buffer.length);

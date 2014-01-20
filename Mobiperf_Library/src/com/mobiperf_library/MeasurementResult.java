@@ -397,20 +397,31 @@ public class MeasurementResult implements Parcelable {
       printer.println("[UDPBurstDown]");
     }
     printer.println("Target: " + desc.target);
-    printer.println("IP addr: " + values.get("target_ip"));
+    printer.println("Timestamp: "
+        + Util.getTimeStringFromMicrosecond(properties.timestamp));
+    printIPTestResult(printer);
+    
     if ( taskProgress == TaskProgress.COMPLETED ) {
-      printer.println("Timestamp: " + Util.getTimeStringFromMicrosecond(properties.timestamp));
+      printer.println("IP addr: " + values.get("target_ip"));
+      printer.println("Timestamp: " + 
+          Util.getTimeStringFromMicrosecond(properties.timestamp));
       printIPTestResult(printer);
-      printer.println("Packet size: " + desc.packetSizeByte);
-      printer.println("Packets number: " + desc.udpBurstCount);
-      printer.println("Packets interval: " + desc.udpInterval);
+      printer.println("Packet size: " + desc.packetSizeByte + "B");
+      printer.println("Number of packets to be sent: " + desc.udpBurstCount);
+      printer.println("Interval between packets: " + desc.udpInterval + "ms");
 
-      printer.println("\nLoss Rate: " + values.get("loss_rate"));
-      printer.println("Inversion Number: " + values.get("inversion_number"));
-      printer.println("Jitter: " + values.get("jitter"));
+      String lossRatio = String.format("%.2f"
+        , Double.parseDouble(values.get("loss_ratio")) * 100);
+      String outOfOrderRatio = String.format("%.2f"
+        , Double.parseDouble(values.get("out_of_order_ratio")) * 100);
+      printer.println("\nLoss ratio: " + lossRatio + "%");
+      printer.println("Out of order ratio: " + outOfOrderRatio + "%");
+      printer.println("Jitter: " + values.get("jitter") + "ms");
+    } else if (taskProgress == TaskProgress.PAUSED) {
+      printer.println("UDP Burst paused!");
     } else {
-      printer.println("Failed");
-    }
+      printer.println("Error: " + values.get("error"));
+    } 
   }
 
   private void getTCPThroughputResult(StringBuilderPrinter printer,
@@ -452,9 +463,11 @@ public class MeasurementResult implements Parcelable {
             " bytes";
       }
       printer.println(displayResult);
+    } else if (taskProgress == TaskProgress.PAUSED) {
+      printer.println("TCP Throughput paused!");
     } else {
-      printer.println("Failed");
-    }
+      printer.println("Error: " + values.get("error"));
+    } 
   }
 
   /**

@@ -136,16 +136,14 @@ public class UDPBurstTask extends MeasurementTask {
       if (params == null) {
         return;
       }
+      
+      if ((target = params.get("target")) == null ) {
+        this.target = MLabNS.TARGET;
+      }
 
       try {
         String val = null;
-        if ((val = params.get("target")) != null ) {
-          this.target = val;
-        }
-        else {
-          this.target = MLabNS.TARGET;
-        }
-        
+
         if ((val = params.get("dst_port")) != null && val.length() > 0
             && Integer.parseInt(val) > 0) {
           this.dstPort = Integer.parseInt(val);
@@ -479,7 +477,7 @@ public class UDPBurstTask extends MeasurementTask {
     // Send burst
     for (int i = 0; i < desc.udpBurstCount; i++) {
       if(stopFlag){
-        return null;
+        throw new MeasurementError("Cancelled");
       }
 
       dataPacket.type = UDPBurstTask.PKT_DATA;
@@ -538,7 +536,7 @@ public class UDPBurstTask extends MeasurementTask {
     DatagramPacket recvpacket = new DatagramPacket(buffer, buffer.length);
 
     if(stopFlag){
-      return udpResult;
+      throw new MeasurementError("Cancelled");
     }
     
     try {
@@ -592,7 +590,7 @@ public class UDPBurstTask extends MeasurementTask {
     InetAddress addr = null;
 
     if(stopFlag){
-      return null;
+      throw new MeasurementError("Cancelled");
     }
     
     // Resolve the server's name
@@ -656,7 +654,7 @@ public class UDPBurstTask extends MeasurementTask {
       desc.udpBurstCount);
     for (int i = 0; i < desc.udpBurstCount; i++) {
       if(stopFlag){
-        return null;
+        throw new MeasurementError("Cancelled");
       }
       try {
         sock.setSoTimeout(RCV_DOWN_TIMEOUT);
@@ -733,36 +731,20 @@ public class UDPBurstTask extends MeasurementTask {
     Logger.i("Running UDPBurstTask on " + desc.target);
     try {
       if (desc.dirUp == true) {
-        socket = sendUpBurst();
-        if(stopFlag){
-          MeasurementResult result = new MeasurementResult(
-            phoneUtils.getDeviceInfo().deviceId,
-            phoneUtils.getDeviceProperty(), UDPBurstTask.TYPE,
-            System.currentTimeMillis() * 1000, TaskProgress.FAILED,
-            this.measurementDesc);
-          MeasurementResult[] mrArray= new MeasurementResult[1];
-          mrArray[0]=result;
-          return mrArray; 
-        }
-          
+        socket = sendUpBurst();          
         udpResult = recvUpResponse(socket);
+        if ( stopFlag ) {
+          throw new MeasurementError("Cancelled");
+        }
         pktrecv = udpResult.packetCount;
         response = pktrecv / (float) desc.udpBurstCount;
         this.taskProgress=TaskProgress.COMPLETED;
       } else {
-        socket = sendDownRequest();
-        if(stopFlag){
-          MeasurementResult result = new MeasurementResult(
-            phoneUtils.getDeviceInfo().deviceId,
-            phoneUtils.getDeviceProperty(), UDPBurstTask.TYPE,
-            System.currentTimeMillis() * 1000, TaskProgress.FAILED,
-            this.measurementDesc);
-          MeasurementResult[] mrArray= new MeasurementResult[1];
-          mrArray[0]=result;
-          return mrArray;
-        }
-        
+        socket = sendDownRequest();        
         udpResult = recvDownResponse(socket);
+        if ( stopFlag ) {
+          throw new MeasurementError("Cancelled");
+        }
         pktrecv = udpResult.packetCount;
         response = pktrecv / (float) desc.udpBurstCount;
         this.taskProgress=TaskProgress.COMPLETED;
@@ -775,7 +757,9 @@ public class UDPBurstTask extends MeasurementTask {
       //    succeeded or not. It ensures previous last UDP burst's packets
       //    will not affect the current one.
       seq++;
-      socket.close();
+      if ( socket != null ) {
+        socket.close();
+      }
     }
 
     MeasurementResult result = new MeasurementResult(

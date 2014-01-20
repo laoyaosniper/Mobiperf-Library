@@ -82,7 +82,9 @@ public class MainActivity extends Activity {
         ArrayList<MeasurementTask> taskList = new ArrayList<MeasurementTask>();
         switch (counter % 5) {   
           case 0:
-            taskType = API.UDPBurst;
+            taskType = API.TCPThroughput;
+            //params.put("packet_burst", String.valueOf(50));
+            //params.put("direction", "Up");
             //params.put("target","www.google.com");
             //endTime = new Date(System.currentTimeMillis() + 5000L);
             priority = MeasurementTask.INVALID_PRIORITY;
@@ -98,7 +100,7 @@ public class MainActivity extends Activity {
               // TODO Auto-generated catch block
               e.printStackTrace();
             }
-            taskType = API.TCPThroughput;
+            taskType = API.UDPBurst;
             //params.put("target","www.google.com");
             //endTime = new Date(System.currentTimeMillis() + 5000L);
             task = libraryAPI.createTask(taskType
