@@ -19,6 +19,7 @@ import java.util.Calendar;
 import java.util.Comparator;
 import java.util.ConcurrentModificationException;
 import java.util.Date;
+import java.util.Map;
 
 import java.util.HashMap;
 import java.util.List;
@@ -154,12 +155,19 @@ public class MeasurementScheduler extends Service{
         }else if (intent.getAction().equals(UpdateIntent.MEASUREMENT_PROGRESS_UPDATE_ACTION)) {
           String taskid=intent.getStringExtra(UpdateIntent.TASKID_PAYLOAD);
           String taskKey=intent.getStringExtra(UpdateIntent.TASKKEY_PAYLOAD);
+          int priority = intent.getIntExtra(UpdateIntent.TASK_PRIORITY_PAYLOAD, MeasurementTask.INVALID_PRIORITY);
+          
           Logger.e(intent.getStringExtra(UpdateIntent.TASK_STATUS_PAYLOAD)+" "+taskid + " " + taskKey);
           if(intent.getStringExtra(UpdateIntent.TASK_STATUS_PAYLOAD).equals(Config.TASK_FINISHED)){
             tasksStatus.put( taskid,TaskStatus.FINISHED);
             Parcelable[] results = intent.getParcelableArrayExtra(UpdateIntent.RESULT_PAYLOAD);
             if ( results != null ) {
-              sendResultMessage(results, taskKey, taskid);
+              if ( priority == MeasurementTask.INVALID_PRIORITY ) {
+                sendServerResultMessage(results, taskid, priority);
+              }
+              else {
+                sendUserResultMessage(results, taskKey, taskid, priority);
+              }
             }
             handleMeasurement();
           }
@@ -175,7 +183,12 @@ public class MeasurementScheduler extends Service{
             tasksStatus.put( taskid,TaskStatus.CANCELLED);
             Parcelable[] results = intent.getParcelableArrayExtra(UpdateIntent.RESULT_PAYLOAD);
             if ( results != null ) {
-              sendResultMessage(results, taskKey, taskid);
+              if ( priority == MeasurementTask.INVALID_PRIORITY ) {
+                sendServerResultMessage(results, taskid, priority);
+              }
+              else {
+                sendUserResultMessage(results, taskKey, taskid, priority);
+              }
             }
           }
           else if (intent.getStringExtra(UpdateIntent.TASK_STATUS_PAYLOAD).equals(Config.TASK_STARTED)) {
@@ -506,21 +519,16 @@ public class MeasurementScheduler extends Service{
     }
   }
 
-  public void sendResultMessage (Parcelable[] results, String clientKey, String taskId) {
+  public void sendUserResultMessage (Parcelable[] results, String clientKey, String taskId, int priority) {
     // Hongyi: return the result to client by message
     Messenger messenger = mClients.get(clientKey);
     if (messenger != null) {
       Message msg = Message.obtain(null, Config.MSG_SEND_RESULT);
       Bundle data = new Bundle();     
       data.putParcelableArray("results", results);   
-      data.putString("taskId", taskId);      
+      data.putString("taskId", taskId);    
+      data.putInt("priority", priority);
       Logger.d("Sending result back to client: taskId: " + taskId);
-//      if ( result != null ) {
-//        Logger.d("Result: " + result.toString());
-//      }
-//      else {
-//        Logger.d("Empty Result!");
-//      }
       msg.setData(data);
       try {
         messenger.send(msg);
@@ -532,13 +540,31 @@ public class MeasurementScheduler extends Service{
     else {
       Logger.e("ClientKey " + clientKey + " doesn't match a messenger!");
     }
-  }
+  }  
 
-  public void sendResultMessage (Parcelable[] results, String clientKey) {
-    sendResultMessage(results, clientKey, "hahaha");
+  public void sendServerResultMessage ( Parcelable[] results, String taskId, int priority) {
+    if ( mClients != null ) {
+      for ( Map.Entry<String, Messenger> entry : mClients.entrySet() ) {
+        Messenger m = entry.getValue();
+        Message msg = Message.obtain(null, Config.MSG_SEND_RESULT);
+        Bundle data = new Bundle();     
+        data.putParcelableArray("results", results);   
+        data.putString("taskId", taskId);    
+        data.putInt("priority", priority);
+        Logger.d("Sending result back to client: " + entry.getKey() + ", taskId: " + taskId);
+        msg.setData(data);
+        try {
+          m.send(msg);
+        } catch (RemoteException e) {
+          // The client is dead, just remove it
+          mClients.remove(entry.getKey());
+        }
+      }
+    }
+    else {
+      Logger.e("No client registered!");
+    }
   }
-  
-
 
   @Override
   public IBinder onBind(Intent intent) {

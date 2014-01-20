@@ -94,7 +94,9 @@ public abstract class API {
    * measurement result
    * @param result
    */
-  public abstract void handleResult(String taskId, MeasurementResult[] results);
+  public abstract void handleResults(String taskId, MeasurementResult[] results);
+  
+  public abstract void handleServerTaskResults(String taskId, MeasurementResult[] results);
   
   /**
    * Handler of incoming messages from service.
@@ -106,6 +108,7 @@ public abstract class API {
       data.setClassLoader(MeasurementScheduler.class.getClassLoader());
       
       String taskId;
+      int priority;
       MeasurementResult[] results;
       switch (msg.what) {
         case Config.MSG_SEND_RESULT:
@@ -117,7 +120,13 @@ public abstract class API {
             }
 
             taskId = data.getString("taskId");
-            handleResult(taskId, results);
+            priority = data.getInt("priority");
+            if ( priority == MeasurementTask.USER_PRIORITY ) {
+              handleResults(taskId, results);
+            }
+            else {
+              handleServerTaskResults(taskId, results);
+            }
           }
           break;
         default:
