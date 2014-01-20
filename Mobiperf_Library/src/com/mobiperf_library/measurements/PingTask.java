@@ -528,7 +528,7 @@ public class PingTask extends MeasurementTask{
   }
 
   @Override
-  public boolean stop() {//TODO
+  public boolean stop() {
     //    cleanUp(pingProc);
     return false;
   }

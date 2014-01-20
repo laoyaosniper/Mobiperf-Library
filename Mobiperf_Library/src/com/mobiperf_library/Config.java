@@ -58,12 +58,12 @@ public interface Config {
 
 
   public static final int TRACEROUTE_TASK_DURATION=30*500;
-  // TODO(Hongyi): task with 0 duration?
+  // TODO(Hongyi): task with 0 duration? (Ashkan): Check what will happen for preemption condition.
   public static final int DEFAULT_DNS_TASK_DURATION=0;
   public static final int DEFAULT_HTTP_TASK_DURATION=0;
   public static final int DEFAULT_PING_TASK_DURATION = PING_COUNT_PER_MEASUREMENT * 500;
-  public static final int DEFAULT_UDPBURST_DURATION = 0;//TODO (Ashkan): Hongyi, set this
-  public static final int DEFAULT_TCPTHROUGHPUT_DURATION = 0;//TODO (Ashkan)
+  public static final int DEFAULT_UDPBURST_DURATION = 1000;
+//  public static final int DEFAULT_TCPTHROUGHPUT_DURATION = 0;
   public static final int DEFAULT_PARALLEL_TASK_DURATION=5*1000;
   public static final int DEFAULT_TASK_DURATION_TIMEOUT=5*1000;
 

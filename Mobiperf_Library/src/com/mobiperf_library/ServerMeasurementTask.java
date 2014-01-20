@@ -61,7 +61,7 @@ public class ServerMeasurementTask implements Callable<MeasurementResult []> {
       intent.putExtra(UpdateIntent.TASKKEY_PAYLOAD, realTask.getKey());
 
       if (results != null){
-        // Hongyi: only single task can be paused
+        //TODO only single task can be paused, 
         if(results[0].getTaskProgress()==TaskProgress.PAUSED){
           intent.putExtra(UpdateIntent.TASK_STATUS_PAYLOAD, Config.TASK_PAUSED);
         }

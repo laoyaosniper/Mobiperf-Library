@@ -96,7 +96,9 @@ public class TCPThroughputTask extends MeasurementTask {
       desc.parameters));
     this.taskProgress=TaskProgress.FAILED;
     this.stopFlag=false;
-    this.duration=Config.DEFAULT_TCPTHROUGHPUT_DURATION;
+    this.duration=(long)(this.KSEC*
+        ((TCPThroughputDesc)measurementDesc).duration_period_sec +
+        ((TCPThroughputDesc)measurementDesc).slow_start_period_sec);
     Logger.i("Create new throughput task");
   }
 
@@ -134,7 +136,7 @@ public class TCPThroughputTask extends MeasurementTask {
         throw new InvalidParameterException("TCPThroughputTask null target");
       }
     }
-    
+
     protected TCPThroughputDesc(Parcel in) {
       super(in);
       data_limit_mb_up = in.readDouble();
@@ -163,7 +165,7 @@ public class TCPThroughputTask extends MeasurementTask {
     public int describeContents() {
       return super.describeContents();
     }
-    
+
     @Override
     public void writeToParcel(Parcel dest, int flags) {
       super.writeToParcel(dest, flags);
@@ -177,7 +179,7 @@ public class TCPThroughputTask extends MeasurementTask {
       dest.writeString(target);
       dest.writeDouble(tcp_timeout_sec);
     }
-    
+
     @Override
     protected void initializeParams(Map<String, String> params) {
       if (params == null) {
