@@ -748,6 +748,15 @@ public class PhoneUtils {
       Logger.e("UnknownHostException in checkDomainNameResolvable() "
                + e.getMessage());
       return DN_UNRESOLVABLE;
+    } catch (InvalidParameterException e) {
+      // MLabNS service lookup fail
+      Logger.e("InvalidParameterException in checkIPCompatibility(). "
+               + e.getMessage());
+      return DN_UNRESOLVABLE;
+    } catch ( Exception e ) {
+      // "catch-all"
+      Logger.e("Unexpected Exception: " + e.getMessage());
+      return DN_UNRESOLVABLE;
     }
     return DN_UNKNOWN;
   }

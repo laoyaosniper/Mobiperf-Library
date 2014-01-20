@@ -43,12 +43,13 @@ public class ServerMeasurementTask implements Callable<MeasurementResult []> {
     Intent intent = new Intent();
     intent.setAction(UpdateIntent.MEASUREMENT_PROGRESS_UPDATE_ACTION);
     intent.putExtra(UpdateIntent.TASK_STATUS_PAYLOAD, Config.TASK_STARTED);
-    intent.putExtra(UpdateIntent.TASKID_PAYLOAD, realTask.generateTaskID());
+    intent.putExtra(UpdateIntent.TASKID_PAYLOAD, realTask.getTaskId());
+    intent.putExtra(UpdateIntent.TASKKEY_PAYLOAD, realTask.getKey());
     scheduler.sendBroadcast(intent);
   }
 
-  private void broadcastMeasurementEnd(MeasurementResult result
-    , MeasurementError error, String clientKey) {
+  private void broadcastMeasurementEnd(MeasurementResult[] results
+    , MeasurementError error) {
 
     // Only broadcast information about measurements if they are true errors.
     if (!(error instanceof MeasurementSkippedException)) {
@@ -56,38 +57,20 @@ public class ServerMeasurementTask implements Callable<MeasurementResult []> {
       intent.setAction(UpdateIntent.MEASUREMENT_PROGRESS_UPDATE_ACTION);
       intent.putExtra(UpdateIntent.TASK_STATUS_PAYLOAD, Config.TASK_FINISHED);
       intent.putExtra(UpdateIntent.TASK_PRIORITY_PAYLOAD, (int) realTask.getDescription().priority);
-      intent.putExtra(UpdateIntent.TASKID_PAYLOAD, realTask.generateTaskID());
+      intent.putExtra(UpdateIntent.TASKID_PAYLOAD, realTask.getTaskId());
+      intent.putExtra(UpdateIntent.TASKKEY_PAYLOAD, realTask.getKey());
 
-      if (result != null){
-        if(result.getTaskProgress()==TaskProgress.PAUSED){
+      if (results != null){
+        // Hongyi: only single task can be paused
+        if(results[0].getTaskProgress()==TaskProgress.PAUSED){
           intent.putExtra(UpdateIntent.TASK_STATUS_PAYLOAD, Config.TASK_PAUSED);
-        }else if(result.getTaskProgress()==TaskProgress.COMPLETED){
-          intent.putExtra(UpdateIntent.TASK_STATUS_PAYLOAD, Config.TASK_FINISHED);
-
-          // Hongyi: task succeed. return result.
-          scheduler.sendResultMessage(result, clientKey);
         }
-        else{
+        else {
           intent.putExtra(UpdateIntent.TASK_STATUS_PAYLOAD, Config.TASK_FINISHED);
-          String errorString = "Measurement " + realTask.getDescriptor() + " has failed";
-          errorString += "\nTimestamp: " + Calendar.getInstance().getTime();
-          Logger.e(errorString);
-          intent.putExtra(UpdateIntent.ERROR_STRING_PAYLOAD, errorString);
-
-          //TODO change this
-          scheduler.sendResultMessage(null, clientKey);
+          intent.putExtra(UpdateIntent.RESULT_PAYLOAD, results);
         }
+        scheduler.sendBroadcast(intent);
       }
-      else {
-        String errorString = "Measurement " + realTask.getDescriptor() + " has failed";
-        errorString += "\nTimestamp: " + Calendar.getInstance().getTime();
-        intent.putExtra(UpdateIntent.ERROR_STRING_PAYLOAD, errorString);
-
-        // Hongyi: task failed.
-        scheduler.sendResultMessage(null, clientKey);
-      } 
-
-      scheduler.sendBroadcast(intent);
     }
 
   }
@@ -95,45 +78,45 @@ public class ServerMeasurementTask implements Callable<MeasurementResult []> {
   @Override
   public MeasurementResult[] call() throws MeasurementError {
     MeasurementResult[] results = null;
+    PhoneUtils phoneUtils = PhoneUtils.getPhoneUtils();
     try {
-      PhoneUtils.getPhoneUtils().acquireWakeLock();
+      phoneUtils.acquireWakeLock();
 
-      if(!(PhoneUtils.getPhoneUtils().isCharging() || PhoneUtils.getPhoneUtils().getCurrentBatteryLevel() > Config.minBatteryThreshold)){
+      if(!(phoneUtils.isCharging() || phoneUtils.getCurrentBatteryLevel() > Config.minBatteryThreshold)){
         throw new MeasurementSkippedException("Not enough battery power");
       }
       if (scheduler.isPauseRequested()) {
         Logger.i("Skipping measurement - scheduler paused");
         throw new MeasurementSkippedException("Scheduler paused");
       }
-      //        MeasurementScheduler.this.setCurrentTask(realTask);
       broadcastMeasurementStart();
       try {
-    	contextCollector.setInterval(realTask.getDescription().contextIntervalSec);
+        contextCollector.setInterval(realTask.getDescription().contextIntervalSec);
         contextCollector.startCollector();
-        results = realTask.call();
+        results = realTask.call(); 
         ArrayList<HashMap<String, String>> contextResults=contextCollector.stopCollector();
-
-        
-        for(MeasurementResult r: results){
-          r.addContextResults(contextResults);
-          broadcastMeasurementEnd(r, null, realTask.measurementDesc.key);
-        }
-        return results;
+        broadcastMeasurementEnd(results, null);
       } catch (MeasurementError e) {
-        Logger.e("Got MeasurementError running task", e);
-        broadcastMeasurementEnd(null, e, realTask.measurementDesc.key);
-        throw e;
+        String error = "Server measurement " + realTask.getDescriptor() 
+            + " has failed: " + e.getMessage() + "\n";
+        Logger.e(error);
+        results = MeasurementResult.getFailureResult(realTask, e);
+        broadcastMeasurementEnd(results, e);
+        
       } catch (Exception e) {
-        Logger.e("Got exception running task", e);
-        MeasurementError err = new MeasurementError("Got exception running task", e);
-        broadcastMeasurementEnd(null, err, realTask.measurementDesc.key);
-        throw err;
+        String error = "Server measurement " + realTask.getDescriptor() + " has failed\n";
+        error += "Unexpected Exception: " + e.getMessage() + "\n";
+        Logger.e(error);
+
+        results = MeasurementResult.getFailureResult(realTask, e);
+        broadcastMeasurementEnd(results, new MeasurementError("Got exception running task", e));
       }
     } finally {
-      PhoneUtils.getPhoneUtils().releaseWakeLock();
+      phoneUtils.releaseWakeLock();
       if(scheduler.getCurrentTask().equals(realTask)){
         scheduler.setCurrentTask(null);
       }
     }
+    return results;
   }
 }

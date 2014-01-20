@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import com.mobiperf_library.MeasurementTask;
@@ -26,7 +25,7 @@ import android.widget.ListView;
 
 public class MainActivity extends Activity {
   private ListView consoleView;
-  private ArrayAdapter<String> results;
+  private ArrayAdapter<String> resultList;
 
   private API libraryAPI;
   private int counter = 0;
@@ -41,18 +40,21 @@ public class MainActivity extends Activity {
     this.libraryAPI = new API(this) {
       private int counter_temp = 0;
       @Override
-      public void handleResult(MeasurementResult result) {
-        if ( result != null ) {
-          results.insert(result.toString(), 0);
+      public void handleResult(MeasurementResult[] results) {
+        if ( results != null ) {
+          for ( MeasurementResult r : results ) {
+            resultList.insert(r.toString(), 0);
+            counter_temp++;
+          }
         }
         else {
-          results.insert("Task failed!", 0);
+          resultList.insert("Task failed!", 0);
+          counter_temp++;
         }
-        counter_temp++;
 
-        results.add("laoyao Counter: " + counter_temp);
+        resultList.add("laoyao Counter: " + counter_temp);
         runOnUiThread(new Runnable() {
-          public void run() { results.notifyDataSetChanged(); }
+          public void run() { resultList.notifyDataSetChanged(); }
         });
 
       }
@@ -60,8 +62,8 @@ public class MainActivity extends Activity {
     };
 
     this.consoleView = (ListView) this.findViewById(R.id.resultConsole);
-    this.results = new ArrayAdapter<String>(getApplicationContext(), R.layout.list_item);
-    this.consoleView.setAdapter(this.results);
+    this.resultList = new ArrayAdapter<String>(getApplicationContext(), R.layout.list_item);
+    this.consoleView.setAdapter(this.resultList);
     this.findViewById(R.id.resultConsole);
     Button button = (Button)this.findViewById(R.id.close);  
     button.setText("Start Scheduler");  
@@ -75,9 +77,37 @@ public class MainActivity extends Activity {
         int priority = MeasurementTask.USER_PRIORITY;
         Date endTime = null;
         TaskParams taskparam;
+        int contextIntervalSec = 1;
         ArrayList<TaskParams> realTaskParams = new ArrayList<TaskParams>();
-        switch (counter % 4) {          
+        switch (counter % 5) {   
           case 0:
+//          try {
+//            libraryAPI.cancelTask(lastLocalId);
+//          } catch (Exception e) {
+//          }
+          taskType = TaskParams.DNSLookup;
+          params.put("target","www.google.com");
+          endTime = new Date(System.currentTimeMillis() + 5000L);
+          priority = MeasurementTask.INVALID_PRIORITY;
+          taskparam = new TaskParams(taskType, "mykey1"
+            , Calendar.getInstance().getTime(), endTime, 120, 1
+            , priority, contextIntervalSec, params);
+          lastLocalId = libraryAPI.addTask(taskparam);
+          break;
+          case 1:
+//          try {
+//            libraryAPI.cancelTask(lastLocalId);
+//          } catch (Exception e) {
+//          }
+          taskType = TaskParams.DNSLookup;
+          params.put("target","www.google.com");
+          endTime = new Date(System.currentTimeMillis() + 5000L);
+          taskparam = new TaskParams(taskType, "mykey1"
+            , Calendar.getInstance().getTime(), endTime, 120, 1
+            , priority, contextIntervalSec, params);
+          lastLocalId = libraryAPI.addTask(taskparam);
+          break;
+          case 2:
 //            try {
 //              libraryAPI.cancelTask(lastLocalId);
 //            } catch (Exception e) {
@@ -104,7 +134,7 @@ public class MainActivity extends Activity {
               , priority, 1, params);
             lastLocalId = libraryAPI.addMultipleTasks(taskparam, realTaskParams);
             break;  
-          case 1:
+          case 3:
             taskType = TaskParams.Traceroute;
             params.put("target","www.google.com");
             priority = MeasurementTask.INVALID_PRIORITY;
@@ -132,7 +162,7 @@ public class MainActivity extends Activity {
 //            } catch (Exception e) {
 //            }
             break;   
-          case 2:
+          case 4:
 //          try {
 //            libraryAPI.cancelTask(lastLocalId);
 //          } catch (Exception e) {
@@ -145,19 +175,6 @@ public class MainActivity extends Activity {
             , priority, 1, params);
           lastLocalId = libraryAPI.addTask(taskparam);
           break;         
-          case 3:
-//            try {
-//              libraryAPI.cancelTask(lastLocalId);
-//            } catch (Exception e) {
-//            }
-            taskType = TaskParams.DNSLookup;
-            params.put("target","www.google.com");
-            endTime = new Date(System.currentTimeMillis() + 5000L);
-            taskparam = new TaskParams(taskType, "mykey1"
-              , Calendar.getInstance().getTime(), endTime, 120, 1
-              , priority, 1, params);
-            lastLocalId = libraryAPI.addTask(taskparam);
-            break;
         }
 //        TaskParams taskparam = new TaskParams(taskType, "mykey1"
 //          , Calendar.getInstance().getTime(), endTime, 120, 1

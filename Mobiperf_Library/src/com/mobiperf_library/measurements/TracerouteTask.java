@@ -64,7 +64,7 @@ public class TracerouteTask extends MeasurementTask  implements PreemptibleMeasu
 
 	private long duration;
 	public ArrayList<Double> resultsArray;
-	private TaskProgress taskProgress;
+	TaskProgress taskProgress;
 
 	private Process pingProc = null;
 	private volatile boolean stopFlag;

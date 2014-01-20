@@ -172,11 +172,9 @@ public class ParallelTask extends MeasurementTask{
       }
 
     } catch (InterruptedException e) {
-
-      Logger.e(this.generateTaskID()+" got interrupted");
+      Logger.e("Parallel task " + this.getTaskId()+" got interrupted");
     }catch (ExecutionException e) {
-      //TODO
-      e.printStackTrace();
+      throw new MeasurementError("Execution error: " + e.getCause());
     }
     finally{
       executor.shutdown();
@@ -221,4 +219,7 @@ public class ParallelTask extends MeasurementTask{
     }
   }
 
+  public MeasurementTask[] getTasks() {
+    return tasks.toArray(new MeasurementTask[tasks.size()]);
+  }
 }

@@ -12,11 +12,12 @@ public class UpdateIntent extends Intent {
   
   // Different types of payloads that this intent can carry:
   public static final String MSG_PAYLOAD = "MSG_PAYLOAD";
-  public static final String RESULT_STRING_PAYLOAD = "RESULT_STRING_PAYLOAD";
-  public static final String ERROR_STRING_PAYLOAD = "ERROR_STRING_PAYLOAD";
+  
   public static final String TASK_STATUS_PAYLOAD = "TASK_STATUS_PAYLOAD";
   public static final String TASKID_PAYLOAD = "TASKID_PAYLOAD";
+  public static final String TASKKEY_PAYLOAD = "TASKKEY_PAYLOAD";
   public static final String TASK_PRIORITY_PAYLOAD = "TASK_PRIORITY_PAYLOAD";//TODO Do we need this?
+  public static final String RESULT_PAYLOAD = "RESULT_PAYLOAD";
   
   
   // Different types of actions that this intent can represent:

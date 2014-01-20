@@ -42,52 +42,30 @@ public class UserMeasurementTask implements Callable<MeasurementResult[]> {
     intent.setAction(UpdateIntent.MEASUREMENT_PROGRESS_UPDATE_ACTION);
     intent.putExtra(UpdateIntent.TASK_PRIORITY_PAYLOAD, MeasurementTask.USER_PRIORITY);
     intent.putExtra(UpdateIntent.TASK_STATUS_PAYLOAD, Config.TASK_STARTED);
-    intent.putExtra(UpdateIntent.TASKID_PAYLOAD, realTask.generateTaskID());
+    intent.putExtra(UpdateIntent.TASKID_PAYLOAD, realTask.getTaskId());
+    intent.putExtra(UpdateIntent.TASKKEY_PAYLOAD, realTask.getKey());
     scheduler.sendBroadcast(intent);
   }
 
-  private void broadcastMeasurementEnd(MeasurementResult result,String clientKey, String taskId) {
+  private void broadcastMeasurementEnd(MeasurementResult[] results) {
     Intent intent = new Intent();
     intent.setAction(UpdateIntent.MEASUREMENT_PROGRESS_UPDATE_ACTION);
 
     intent.putExtra(UpdateIntent.TASK_PRIORITY_PAYLOAD, MeasurementTask.USER_PRIORITY);//TODO fixed one value priority for all users task?
-    intent.putExtra(UpdateIntent.TASKID_PAYLOAD, realTask.generateTaskID());
+    intent.putExtra(UpdateIntent.TASKID_PAYLOAD, realTask.getTaskId());
+    intent.putExtra(UpdateIntent.TASKKEY_PAYLOAD, realTask.getKey());
 
-
-
-    if (result != null){
-      if(result.getTaskProgress()==TaskProgress.PAUSED){
+    if (results != null){
+      // Hongyi: only single task can be paused
+      if(results[0].getTaskProgress()==TaskProgress.PAUSED){
         intent.putExtra(UpdateIntent.TASK_STATUS_PAYLOAD, Config.TASK_PAUSED);
-      }else if(result.getTaskProgress()==TaskProgress.COMPLETED){
-        intent.putExtra(UpdateIntent.TASK_STATUS_PAYLOAD, Config.TASK_FINISHED);
-        // Hongyi: task succeed. return result.//TODO do this after receiving task finished intent
-        scheduler.sendResultMessage(result, clientKey, taskId);
       }
       else{
         intent.putExtra(UpdateIntent.TASK_STATUS_PAYLOAD, Config.TASK_FINISHED);
-        String errorString = "Measurement " + realTask.getDescriptor() + " has failed";
-        errorString += "\nTimestamp: " + Calendar.getInstance().getTime();
-        Logger.e(errorString);
-        intent.putExtra(UpdateIntent.ERROR_STRING_PAYLOAD, errorString);
-
-       
-        // TODO(Hongyi): currently just return null
-        scheduler.sendResultMessage(null, clientKey, taskId);
-
+        intent.putExtra(UpdateIntent.RESULT_PAYLOAD, results);
       }
+      scheduler.sendBroadcast(intent);
     }
-    else {
-      String errorString = "Measurement " + realTask.getDescriptor() + " has failed";
-      errorString += "\nTimestamp: " + Calendar.getInstance().getTime();
-      intent.putExtra(UpdateIntent.ERROR_STRING_PAYLOAD, errorString);
-
-      //Hongyi: task failed, return empty result.
-      Logger.e("Task failed, return empty result");
-      scheduler.sendResultMessage(null, clientKey, taskId);
-    } 
-
-    scheduler.sendBroadcast(intent);
-    // Update the status bar once the user measurement finishes
 
   }
 
@@ -98,36 +76,29 @@ public class UserMeasurementTask implements Callable<MeasurementResult[]> {
   @Override
   public MeasurementResult[] call() throws MeasurementError {
     MeasurementResult[] results = null;
+    PhoneUtils phoneUtils = PhoneUtils.getPhoneUtils();
     try {
-      PhoneUtils.getPhoneUtils().acquireWakeLock();
-      //        setCurrentTask(realTask);
+      phoneUtils.acquireWakeLock();
       broadcastMeasurementStart();
       contextCollector.setInterval(realTask.getDescription().contextIntervalSec);
       contextCollector.startCollector();
       results = realTask.call();
       ArrayList<HashMap<String, String>> contextResults=contextCollector.stopCollector();
-
-      
-      //TODO (Hongyi): better to catch exception in the same way of ServerMeasurement
-      // otherwise iterating results may cause null pointer exception
-      for(MeasurementResult r: results){
-    	r.addContextResults(contextResults);
-        broadcastMeasurementEnd(r,realTask.measurementDesc.key, realTask.generateTaskID());
-      }
+      //TODO attach the results to the MeasurementResults 
     } catch (MeasurementError e) {
-      Logger.e("User Measurement failed! Reason: " + e.getMessage());
-      broadcastMeasurementEnd(null, realTask.measurementDesc.key, realTask.generateTaskID());
-      throw e;
+      Logger.e("User measurement " + realTask.getDescriptor() + " has failed");
+      Logger.e(e.getMessage());
+      results = MeasurementResult.getFailureResult(realTask, e);
     } catch (Exception e) {
-      Logger.e("Unexpected Exception! Reason: " + e.getMessage());
-      broadcastMeasurementEnd(null, realTask.measurementDesc.key, realTask.generateTaskID());
-      MeasurementError err = new MeasurementError("Got exception running task", e);
-      throw err;
+      Logger.e("User measurement " + realTask.getDescriptor() + " has failed");
+      Logger.e("Unexpected Exception: " + e.getMessage());
+      results = MeasurementResult.getFailureResult(realTask, e);
     } finally {
+      broadcastMeasurementEnd(results);
       if(scheduler.getCurrentTask().equals(realTask)){
         scheduler.setCurrentTask(null);
       }
-      PhoneUtils.getPhoneUtils().releaseWakeLock();
+      phoneUtils.releaseWakeLock();
     }
     return results;
   }
