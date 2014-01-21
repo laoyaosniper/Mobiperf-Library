@@ -135,6 +135,7 @@ public class MeasurementResult implements Parcelable {
         System.currentTimeMillis() * 1000,
         TaskProgress.FAILED,
         task.measurementDesc);
+      Logger.e(error.toString() + "\n" + getStackTrace(error));
 //      r.addResult("error", error.toString() + "\n" + getStackTrace(error));
       r.addResult("error", error.toString());
       results.add(r);
