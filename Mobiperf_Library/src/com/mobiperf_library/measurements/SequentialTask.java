@@ -29,7 +29,7 @@ import android.os.Parcelable;
 
 public class SequentialTask extends MeasurementTask{
 
-  private long duration;
+  
   private List<MeasurementTask> tasks;
 
   private ExecutorService executor;
@@ -38,7 +38,9 @@ public class SequentialTask extends MeasurementTask{
   public static final String TYPE = "sequential";
   // Human readable name for the task
   public static final String DESCRIPTOR = "sequential";
-
+  private volatile boolean stopFlag;
+  private long duration;
+  private volatile MeasurementTask currentTask;
 
   public static class SequentialDesc extends MeasurementDesc {     
 
@@ -104,23 +106,24 @@ public class SequentialTask extends MeasurementTask{
 
     }
     this.duration=totalduration;
-
+    this.stopFlag=false;
+    this.currentTask=null;
   }
   
   protected SequentialTask(Parcel in) {
     super(in);
     ClassLoader loader = Thread.currentThread().getContextClassLoader();
     MeasurementTask[] tempTasks = (MeasurementTask[])in.readParcelableArray(loader);
-    executor = Executors.newFixedThreadPool(tasks.size());
+    executor=Executors.newSingleThreadExecutor();
     tasks = new ArrayList<MeasurementTask>();
-    long maxDuration = 0;
+    long totalduration=0;
     for ( MeasurementTask mt : tempTasks ) {
       tasks.add(mt);
-      if (mt.getDuration() > maxDuration) {
-        maxDuration = mt.getDuration();
-      }
+      totalduration+=mt.getDuration();
     }
-    this.duration = maxDuration;
+    this.duration = totalduration;
+    this.stopFlag=false;
+    this.currentTask=null;
   }
 
   public static final Parcelable.Creator<SequentialTask> CREATOR
@@ -158,7 +161,11 @@ public class SequentialTask extends MeasurementTask{
     try {
       //      futures=executor.invokeAll(this.tasks,timeout,TimeUnit.MILLISECONDS);
       for(MeasurementTask mt: tasks){
+        if(stopFlag){
+          throw new MeasurementError("Cancelled");
+        }
         Future<MeasurementResult[]> f=executor.submit(mt);
+        currentTask=mt;
         MeasurementResult[] r;
         try {
           r = f.get(mt.getDuration()==0?Config.DEFAULT_TASK_DURATION_TIMEOUT*2:mt.getDuration()*2,TimeUnit.MILLISECONDS);
@@ -166,7 +173,9 @@ public class SequentialTask extends MeasurementTask{
             allresults.add(r[i]);
           }
         } catch (TimeoutException e) {
-          f.cancel(true);//TODO
+          if(mt.stop()){
+            f.cancel(true);
+          }
         }
 
       }
@@ -209,7 +218,14 @@ public class SequentialTask extends MeasurementTask{
 
   @Override
   public boolean stop() {
-    return false;
+    if(currentTask.stop()){
+      stopFlag=true;
+      executor.shutdown();
+      return true;
+    }else{
+      return false;
+    }
+    
   }
 
   @Override
