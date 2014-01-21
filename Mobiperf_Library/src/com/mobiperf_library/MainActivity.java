@@ -101,7 +101,8 @@ public class MainActivity extends Activity {
         ArrayList<MeasurementTask> taskList = new ArrayList<MeasurementTask>();
         switch (counter % 5) {   
           case 0:
-            taskType = API.TCPThroughput;
+            taskType = API.UDPBurst;
+            params.put("packet_burst", "16");
             //params.put("packet_burst", String.valueOf(50));
             //params.put("direction", "Up");
             //params.put("target","www.google.com");
@@ -113,13 +114,15 @@ public class MainActivity extends Activity {
               , priority, contextIntervalSec, params);
             break;
           case 1:
-            try {
-              libraryAPI.cancelTask(prevTask.getTaskId());
-            } catch (Exception e) {
-              // TODO Auto-generated catch block
-              e.printStackTrace();
-            }
+//            try {
+//              libraryAPI.cancelTask(prevTask.getTaskId());
+//            } catch (Exception e) {
+//              // TODO Auto-generated catch block
+//              e.printStackTrace();
+//            }
             taskType = API.UDPBurst;
+            params.put("direction", "Up");
+            params.put("packet_burst", "16");
             //params.put("target","www.google.com");
             //endTime = new Date(System.currentTimeMillis() + 5000L);
             task = libraryAPI.createTask(taskType

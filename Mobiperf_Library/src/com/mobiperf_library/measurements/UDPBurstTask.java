@@ -665,6 +665,7 @@ public class UDPBurstTask extends MeasurementTask {
         sock.setSoTimeout(RCV_DOWN_TIMEOUT);
         sock.receive(recvpacket);
       } catch (IOException e) {
+        Logger.e("Timeout at round " + i);
         break;
       }
 
