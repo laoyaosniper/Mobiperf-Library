@@ -440,13 +440,13 @@ public class MeasurementScheduler extends Service{
   }
   
   public synchronized boolean cancelTask(String taskId, String clientKey){
-    // Hongyi: should ensure taskId is not null 
+    
     if(taskId != null && idToClientKey.containsKey(taskId)){
       if(idToClientKey.get(taskId).equals(clientKey)){
+        
         boolean found=false;
         for(Object object : mainQueue) {
           MeasurementTask task = (MeasurementTask) object;
-//          if (task.generateTaskID().equals(taskId) && task.getKey().equals(clientKey)){
           if (task.getTaskId().equals(taskId) && task.getKey().equals(clientKey)){
             mainQueue.remove(task);
             found=true;
@@ -455,15 +455,13 @@ public class MeasurementScheduler extends Service{
 
         for(Object object : waitingTasksQueue) {
           MeasurementTask task = (MeasurementTask) object;
-//          if (task.generateTaskID().equals(taskId) && task.getKey().equals(clientKey)){
           if (task.getTaskId().equals(taskId) && task.getKey().equals(clientKey)){
             waitingTasksQueue.remove(task);
             found=true;
           }
         }
         MeasurementTask currentMeasumrentTask=getCurrentTask();
-//        if(currentMeasumrentTask.generateTaskID().equals(taskId) && currentMeasumrentTask.getKey().equals(clientKey)){
-        if(currentMeasumrentTask.getTaskId().equals(taskId) && currentMeasumrentTask.getKey().equals(clientKey)){
+        if(currentMeasumrentTask!=null && currentMeasumrentTask.getTaskId().equals(taskId) && currentMeasumrentTask.getKey().equals(clientKey)){
           for(MeasurementTask mt: pendingTasks.keySet()){
             if(currentMeasumrentTask.equals(mt)){
               currentMeasumrentTask=mt;
