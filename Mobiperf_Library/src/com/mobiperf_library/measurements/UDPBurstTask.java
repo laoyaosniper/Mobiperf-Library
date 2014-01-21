@@ -329,7 +329,12 @@ public class UDPBurstTask extends MeasurementTask {
      * @return the inversion number of the current UDP burst
      */
     public double calculateOutOfOrderRatio() {
-      return (double)outOfOrderCount / packetCount;
+      if ( packetCount != 0 ) {
+        return (double)outOfOrderCount / packetCount;
+      }
+      else {
+        return 0.0;
+      }
     }
 
     /**
@@ -667,9 +672,10 @@ public class UDPBurstTask extends MeasurementTask {
       if (dataPacket.type == UDPBurstTask.PKT_DATA) {
         // Received seq number must be same with client seq
         if ( dataPacket.seq != seq ) {
-          Logger.e("Error: Server send data packets with different seq, old "
-              + seq + " => new " + dataPacket.seq);
-          break;
+          String err = "Server send data packets with different seq, old "
+              + seq + " => new " + dataPacket.seq;
+          Logger.e(err);
+          throw new MeasurementError(err);
         }
 
         Logger.i("Recv UDP response from " + desc.target + " type:"
