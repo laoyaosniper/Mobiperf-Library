@@ -614,13 +614,13 @@ public class PhoneUtils {
   }
   
   private String getVersionStr() {
-    return String.format("INCREMENTAL:%s, RELEASE:%s, SDK_INT:%s", Build.VERSION.INCREMENTAL,
-        Build.VERSION.RELEASE, Build.VERSION.SDK_INT);
+    return String.format("INCREMENTAL:%s, RELEASE:%s, SDK_INT:%s",
+      Build.VERSION.INCREMENTAL, Build.VERSION.RELEASE, Build.VERSION.SDK_INT);
   }
   
   private String getDeviceId() {
-	  
-    String deviceId = telephonyManager.getDeviceId();  // This ID is permanent to a physical phone.
+    // This ID is permanent to a physical phone.
+    String deviceId = telephonyManager.getDeviceId();  
     
     
     // "generic" means the emulator.

@@ -141,11 +141,6 @@ public class PingTask extends MeasurementTask{
     };
 
     @Override
-    public int describeContents() {
-      return super.describeContents();
-    }
-
-    @Override
     public void writeToParcel(Parcel dest, int flags) {
       super.writeToParcel(dest, flags);
       dest.writeString(pingExe);
@@ -153,8 +148,6 @@ public class PingTask extends MeasurementTask{
       dest.writeInt(packetSizeByte);
       dest.writeInt(pingTimeoutSec);
     }
-
-
   }
 
   @SuppressWarnings("rawtypes")
@@ -175,8 +168,8 @@ public class PingTask extends MeasurementTask{
     duration = in.readLong();
   }
 
-  public static final Parcelable.Creator<PingTask> CREATOR
-  = new Parcelable.Creator<PingTask>() {
+  public static final Parcelable.Creator<PingTask> CREATOR =
+      new Parcelable.Creator<PingTask>() {
     public PingTask createFromParcel(Parcel in) {
       return new PingTask(in);
     }
@@ -256,15 +249,12 @@ public class PingTask extends MeasurementTask{
     return DESCRIPTOR;
   }
 
-
-
   private MeasurementResult constructResult(ArrayList<Double> rrtVals, double packetLoss,
                                             int packetsSent, String pingMethod) {
     double min = Double.MAX_VALUE;
     double max = Double.MIN_VALUE;
     double mdev, avg, filteredAvg;
     double total = 0;
-
 
     if (rrtVals.size() == 0) {
       return null;
@@ -315,17 +305,18 @@ public class PingTask extends MeasurementTask{
     }
   }
 
-  /* Compute the average of the filtered rtts.
-   * The first several ping results are usually extremely large as the device needs to activate
-   * the wireless interface and resolve domain names. Such distorted measurements are filtered out
-   * 
+  /**
+   * Compute the average of the filtered rtts.
+   * The first several ping results are usually extremely large as the device
+   * needs to activate the wireless interface and resolve domain names.
+   * Such distorted measurements are filtered out
    */
   private double filterPingResults(final ArrayList<Double> rrts, double avg) {
     double rrtAvg = avg;
     // Our # of results should be less than the # of times we ping
     try {
-      ArrayList<Double> filteredResults =
-          Util.applyInnerBandFilter(rrts, Double.MIN_VALUE, rrtAvg * Config.PING_FILTER_THRES);
+      ArrayList<Double> filteredResults = Util.applyInnerBandFilter(rrts,
+        Double.MIN_VALUE, rrtAvg * Config.PING_FILTER_THRES);
       // Now we compute the average again based on the filtered results
       if (filteredResults != null && filteredResults.size() > 0) {
         rrtAvg = Util.getSum(filteredResults) / filteredResults.size();
@@ -337,12 +328,14 @@ public class PingTask extends MeasurementTask{
   }
 
   // Runs when SystemState is IDLE
-  private MeasurementResult executePingCmdTask(int ipByteLen) throws MeasurementError {
+  private MeasurementResult executePingCmdTask(int ipByteLen)
+      throws MeasurementError {
     Logger.i("Starting executePingCmdTask");
     PingDesc pingTask = (PingDesc) this.measurementDesc;
     String errorMsg = "";
     MeasurementResult measurementResult = null;
-    // TODO(Wenjie): Add a exhaustive list of ping locations for different Android phones
+    // TODO(Wenjie): Add a exhaustive list of ping locations for different
+    //               Android phones
     pingTask.pingExe = Util.pingExecutableBasedOnIPType(ipByteLen);
     Logger.i("Ping executable is " + pingTask.pingExe);
     if (pingTask.pingExe == null) {
@@ -369,14 +362,15 @@ public class PingTask extends MeasurementTask{
       int packetsSent = Config.PING_COUNT_PER_MEASUREMENT;
       // Process each line of the ping output and store the rrt in array rrts.
       while ((line = br.readLine()) != null) {
-        // Ping prints a number of 'param=value' pairs, among which we only need the 
-        // 'time=rrt_val' pair
+        // Ping prints a number of 'param=value' pairs, among which we only need
+        // the 'time=rrt_val' pair
         String[] extractedValues = Util.extractInfoFromPingOutput(line);
         if (extractedValues != null) {
           int curIcmpSeq = Integer.parseInt(extractedValues[0]);
           double rrtVal = Double.parseDouble(extractedValues[1]);
 
-          // ICMP responses from the system ping command could be duplicate and out of order
+          // ICMP responses from the system ping command could be duplicate
+          // and out of order
           if (!receivedIcmpSeq.contains(curIcmpSeq)) {
             rrts.add(rrtVal);
             receivedIcmpSeq.add(curIcmpSeq);
@@ -397,9 +391,11 @@ public class PingTask extends MeasurementTask{
       // Use the output from the ping command to compute packet loss. If that's not
       // available, use an estimation.
       if (packetLoss == Double.MIN_VALUE) {
-        packetLoss = 1 - ((double) rrts.size() / (double) Config.PING_COUNT_PER_MEASUREMENT);
+        packetLoss = 1 - 
+            ((double) rrts.size() / (double) Config.PING_COUNT_PER_MEASUREMENT);
       }
-      measurementResult = constructResult(rrts, packetLoss, packetsSent, PING_METHOD_CMD);
+      measurementResult = constructResult(rrts, packetLoss,
+        packetsSent, PING_METHOD_CMD);
     } catch (IOException e) {
       Logger.e(e.getMessage());
       errorMsg += e.getMessage() + "\n";
@@ -449,8 +445,10 @@ public class PingTask extends MeasurementTask{
         }
       }
       Logger.i("java ping succeeds");
-      double packetLoss = 1 - ((double) rrts.size() / (double) Config.PING_COUNT_PER_MEASUREMENT);
-      result = constructResult(rrts, packetLoss, Config.PING_COUNT_PER_MEASUREMENT, PING_METHOD_JAVA);
+      double packetLoss = 1 -
+          ((double) rrts.size() / (double) Config.PING_COUNT_PER_MEASUREMENT);
+      result = constructResult(rrts, packetLoss,
+        Config.PING_COUNT_PER_MEASUREMENT, PING_METHOD_JAVA);
     } catch (IllegalArgumentException e) {
       Logger.e(e.getMessage());
       errorMsg += e.getMessage() + "\n";
@@ -467,10 +465,11 @@ public class PingTask extends MeasurementTask{
   }
 
   /** 
-   * Use the HTTP Head method to emulate ping. The measurement from this method can be 
-   * substantially (2x) greater than the first two methods and inaccurate. This is because, 
-   * depending on the implementing of the destination web server, either a quick HTTP
-   * response is replied or some actual heavy lifting will be done in preparing the response
+   * Use the HTTP Head method to emulate ping. The measurement from this method
+   * can be substantially (2x) greater than the first two methods and inaccurate.
+   * This is because, depending on the implementing of the destination web
+   * server, either a quick HTTP response is replied or some actual heavy
+   * lifting will be done in preparing the response
    * */
   private MeasurementResult executeHttpPingTask() throws MeasurementError {
     long pingStartTime = 0;
@@ -503,8 +502,10 @@ public class PingTask extends MeasurementTask{
       }
       Logger.i("HTTP get ping succeeds");
       Logger.i("RTT is " + rrts.toString());
-      double packetLoss = 1 - ((double) rrts.size() / (double) Config.PING_COUNT_PER_MEASUREMENT);
-      result = constructResult(rrts, packetLoss, Config.PING_COUNT_PER_MEASUREMENT, PING_METHOD_HTTP);
+      double packetLoss = 1
+          - ((double) rrts.size() / (double) Config.PING_COUNT_PER_MEASUREMENT);
+      result = constructResult(rrts, packetLoss,
+        Config.PING_COUNT_PER_MEASUREMENT, PING_METHOD_HTTP);
     } catch (MalformedURLException e) {
       Logger.e(e.getMessage());
       errorMsg += e.getMessage() + "\n";
@@ -523,13 +524,12 @@ public class PingTask extends MeasurementTask{
   @Override
   public String toString() {
     PingDesc desc = (PingDesc) measurementDesc;
-    return "[Ping]\n  Target: " + desc.target + "\n  Interval (sec): " + desc.intervalSec 
-        + "\n  Next run: " + desc.startTime;
+    return "[Ping]\n  Target: " + desc.target + "\n  Interval (sec): "
+        + desc.intervalSec + "\n  Next run: " + desc.startTime;
   }
 
   @Override
   public boolean stop() {
-    //    cleanUp(pingProc);
     return false;
   }
 

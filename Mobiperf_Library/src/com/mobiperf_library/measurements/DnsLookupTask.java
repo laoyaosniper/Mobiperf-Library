@@ -54,12 +54,14 @@ public class DnsLookupTask extends MeasurementTask{
 
 
     public DnsLookupDesc(String key, Date startTime, Date endTime,
-                         double intervalSec, long count, long priority, int contextIntervalSec, Map<String, String> params) {
-      super(DnsLookupTask.TYPE, key, startTime, endTime, intervalSec, count, priority, contextIntervalSec, params);
+        double intervalSec, long count, long priority,
+        int contextIntervalSec, Map<String, String> params) {
+      super(DnsLookupTask.TYPE, key, startTime, endTime, intervalSec, count,
+        priority, contextIntervalSec, params);
       initializeParams(params);
       if (this.target == null || this.target.length() == 0) {
-        throw new InvalidParameterException("LookupDnsTask cannot be created due " +
-            " to null target string");
+        throw new InvalidParameterException("LookupDnsTask cannot be created" +
+            " due to null target string");
       }
     }
 
@@ -87,8 +89,8 @@ public class DnsLookupTask extends MeasurementTask{
       server = in.readString();
     }
 
-    public static final Parcelable.Creator<DnsLookupDesc> CREATOR
-    = new Parcelable.Creator<DnsLookupDesc>() {
+    public static final Parcelable.Creator<DnsLookupDesc> CREATOR =
+        new Parcelable.Creator<DnsLookupDesc>() {
       public DnsLookupDesc createFromParcel(Parcel in) {
         return new DnsLookupDesc(in);
       }
@@ -99,11 +101,6 @@ public class DnsLookupTask extends MeasurementTask{
     };
 
     @Override
-    public int describeContents() {
-      return super.describeContents();
-    }
-
-    @Override
     public void writeToParcel(Parcel dest, int flags) {
       super.writeToParcel(dest, flags);
       dest.writeString(target);
@@ -111,11 +108,10 @@ public class DnsLookupTask extends MeasurementTask{
     }
   }
 
-
-
   public DnsLookupTask(MeasurementDesc desc) {
-    super(new DnsLookupDesc(desc.key, desc.startTime, desc.endTime, desc.intervalSec,
-      desc.count, desc.priority, desc.contextIntervalSec, desc.parameters));
+    super(new DnsLookupDesc(desc.key, desc.startTime, desc.endTime,
+      desc.intervalSec, desc.count, desc.priority, desc.contextIntervalSec,
+      desc.parameters));
     this.duration=Config.DEFAULT_DNS_TASK_DURATION;
   }
   
@@ -124,8 +120,8 @@ public class DnsLookupTask extends MeasurementTask{
     duration = in.readLong();
   }
 
-  public static final Parcelable.Creator<DnsLookupTask> CREATOR
-  = new Parcelable.Creator<DnsLookupTask>() {
+  public static final Parcelable.Creator<DnsLookupTask> CREATOR =
+      new Parcelable.Creator<DnsLookupTask>() {
     public DnsLookupTask createFromParcel(Parcel in) {
       return new DnsLookupTask(in);
     }
@@ -134,11 +130,6 @@ public class DnsLookupTask extends MeasurementTask{
       return new DnsLookupTask[size];
     }
   };
-
-  @Override
-  public int describeContents() {
-    return super.describeContents();
-  }
 
   @Override
   public void writeToParcel(Parcel dest, int flags) {
@@ -182,8 +173,9 @@ public class DnsLookupTask extends MeasurementTask{
     if (resultInet != null) {
       Logger.i("Successfully resolved target address");
       PhoneUtils phoneUtils = PhoneUtils.getPhoneUtils();
-      MeasurementResult result = new MeasurementResult(phoneUtils.getDeviceInfo().deviceId,
-        phoneUtils.getDeviceProperty(), DnsLookupTask.TYPE, System.currentTimeMillis() * 1000,
+      MeasurementResult result = new MeasurementResult(
+        phoneUtils.getDeviceInfo().deviceId, phoneUtils.getDeviceProperty(),
+        DnsLookupTask.TYPE, System.currentTimeMillis() * 1000,
         TaskProgress.COMPLETED, this.measurementDesc);
       result.addResult("address", resultInet.getHostAddress());
       result.addResult("real_hostname", resultInet.getCanonicalHostName());
@@ -216,8 +208,8 @@ public class DnsLookupTask extends MeasurementTask{
   @Override
   public String toString() {
     DnsLookupDesc desc = (DnsLookupDesc) measurementDesc;
-    return "[DNS Lookup]\n  Target: " + desc.target + "\n  Interval (sec): " + desc.intervalSec 
-        + "\n  Next run: " + desc.startTime;
+    return "[DNS Lookup]\n  Target: " + desc.target + "\n  Interval (sec): "
+        + desc.intervalSec + "\n  Next run: " + desc.startTime;
   }
 
   @Override

@@ -15,7 +15,6 @@
 package com.mobiperf_library;
 
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.HashMap;
 import java.util.concurrent.Callable;
 
@@ -31,7 +30,8 @@ public class UserMeasurementTask implements Callable<MeasurementResult[]> {
   private MeasurementScheduler scheduler;
   private ContextCollector contextCollector;
 
-  public UserMeasurementTask(MeasurementTask task, MeasurementScheduler scheduler) {
+  public UserMeasurementTask(MeasurementTask task,
+                             MeasurementScheduler scheduler) {
     realTask = task;
     this.scheduler = scheduler;  
     this.contextCollector= new ContextCollector();
@@ -40,7 +40,8 @@ public class UserMeasurementTask implements Callable<MeasurementResult[]> {
   private void broadcastMeasurementStart() {
     Intent intent = new Intent();
     intent.setAction(UpdateIntent.MEASUREMENT_PROGRESS_UPDATE_ACTION);
-    intent.putExtra(UpdateIntent.TASK_PRIORITY_PAYLOAD, MeasurementTask.USER_PRIORITY);
+    intent.putExtra(UpdateIntent.TASK_PRIORITY_PAYLOAD,
+      MeasurementTask.USER_PRIORITY);
     intent.putExtra(UpdateIntent.TASK_STATUS_PAYLOAD, Config.TASK_STARTED);
     intent.putExtra(UpdateIntent.TASKID_PAYLOAD, realTask.getTaskId());
     intent.putExtra(UpdateIntent.TASKKEY_PAYLOAD, realTask.getKey());
@@ -50,8 +51,9 @@ public class UserMeasurementTask implements Callable<MeasurementResult[]> {
   private void broadcastMeasurementEnd(MeasurementResult[] results) {
     Intent intent = new Intent();
     intent.setAction(UpdateIntent.MEASUREMENT_PROGRESS_UPDATE_ACTION);
-
-    intent.putExtra(UpdateIntent.TASK_PRIORITY_PAYLOAD, MeasurementTask.USER_PRIORITY);//TODO fixed one value priority for all users task?
+    //TODO fixed one value priority for all users task?
+    intent.putExtra(UpdateIntent.TASK_PRIORITY_PAYLOAD,
+      MeasurementTask.USER_PRIORITY);
     intent.putExtra(UpdateIntent.TASKID_PAYLOAD, realTask.getTaskId());
     intent.putExtra(UpdateIntent.TASKKEY_PAYLOAD, realTask.getKey());
 
@@ -70,8 +72,8 @@ public class UserMeasurementTask implements Callable<MeasurementResult[]> {
   }
 
   /**
-   * The call() method that broadcast intents before the measurement starts and after the
-   * measurement finishes.
+   * The call() method that broadcast intents before the measurement starts
+   * and after the measurement finishes.
    */
   @Override
   public MeasurementResult[] call() throws MeasurementError {
@@ -83,7 +85,8 @@ public class UserMeasurementTask implements Callable<MeasurementResult[]> {
       contextCollector.setInterval(realTask.getDescription().contextIntervalSec);
       contextCollector.startCollector();
       results = realTask.call();
-      ArrayList<HashMap<String, String>> contextResults=contextCollector.stopCollector();
+      ArrayList<HashMap<String, String>> contextResults =
+          contextCollector.stopCollector();
       //TODO attach the results to the MeasurementResults 
     } catch (MeasurementError e) {
       Logger.e("User measurement " + realTask.getDescriptor() + " has failed");

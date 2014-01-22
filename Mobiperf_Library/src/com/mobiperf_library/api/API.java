@@ -94,9 +94,11 @@ public abstract class API {
    * measurement result
    * @param result
    */
-  public abstract void handleResults(String taskId, MeasurementResult[] results);
+  public abstract void handleResults(String taskId,
+      MeasurementResult[] results);
   
-  public abstract void handleServerTaskResults(String taskId, MeasurementResult[] results);
+  public abstract void handleServerTaskResults(String taskId,
+      MeasurementResult[] results);
   
   /**
    * Handler of incoming messages from service.
@@ -193,7 +195,6 @@ public abstract class API {
     if (!isBindingToService && !isBound) {
         // Bind to the scheduler service if it is not bounded
         Intent intent = new Intent("com.mobiperf_library.MeasurementScheduler");
-        //Intent intent = new Intent(this, MeasurementScheduler.class);
         parent.bindService(intent, serviceConn, Context.BIND_AUTO_CREATE);
         isBindingToService = true;
     }
@@ -220,11 +221,7 @@ public abstract class API {
   public MeasurementTask createTask( int taskType, Date startTime
     , Date endTime, double intervalSec, long count, long priority
     , int contextIntervalSec, Map<String, String> params) {
-    MeasurementTask task = null;
-    
-//    // Hongyi: for test
-//    params.put("firstTimestamp", String.valueOf(System.currentTimeMillis()));
-    
+    MeasurementTask task = null;    
     switch ( taskType ) {
       case API.DNSLookup:
         task = new DnsLookupTask(new DnsLookupDesc(clientKey, startTime, endTime
@@ -243,8 +240,8 @@ public abstract class API {
           , intervalSec, count, priority, contextIntervalSec, params));
         break;
       case API.TCPThroughput:
-        task = new TCPThroughputTask(new TCPThroughputDesc(clientKey, startTime, endTime
-          , intervalSec, count, priority, contextIntervalSec, params));
+        task = new TCPThroughputTask(new TCPThroughputDesc(clientKey, startTime
+          , endTime, intervalSec, count, priority, contextIntervalSec, params));
         break;
       case API.UDPBurst:
         task = new UDPBurstTask(new UDPBurstDesc(clientKey, startTime, endTime
@@ -261,10 +258,6 @@ public abstract class API {
     , int contextIntervalSec, Map<String, String> params
     , ArrayList<MeasurementTask> taskList) {
     MeasurementTask task = null;
-    
-//    // Hongyi: for test
-//    params.put("firstTimestamp", String.valueOf(System.currentTimeMillis()));
-    
     switch ( manner ) {
       case Parallel:
         task = new ParallelTask(new ParallelDesc(clientKey, startTime, endTime

@@ -15,7 +15,6 @@
 package com.mobiperf_library;
 
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.HashMap;
 import java.util.concurrent.Callable;
 
@@ -26,8 +25,6 @@ import com.mobiperf_library.exceptions.MeasurementError;
 import com.mobiperf_library.exceptions.MeasurementSkippedException;
 import com.mobiperf_library.util.Logger;
 import com.mobiperf_library.util.PhoneUtils;
-
-
 
 public class ServerMeasurementTask implements Callable<MeasurementResult []> {
   private MeasurementTask realTask;
@@ -56,7 +53,8 @@ public class ServerMeasurementTask implements Callable<MeasurementResult []> {
       Intent intent = new Intent();
       intent.setAction(UpdateIntent.MEASUREMENT_PROGRESS_UPDATE_ACTION);
       intent.putExtra(UpdateIntent.TASK_STATUS_PAYLOAD, Config.TASK_FINISHED);
-      intent.putExtra(UpdateIntent.TASK_PRIORITY_PAYLOAD, (int) realTask.getDescription().priority);
+      intent.putExtra(UpdateIntent.TASK_PRIORITY_PAYLOAD, 
+        (int) realTask.getDescription().priority);
       intent.putExtra(UpdateIntent.TASKID_PAYLOAD, realTask.getTaskId());
       intent.putExtra(UpdateIntent.TASKKEY_PAYLOAD, realTask.getKey());
 
@@ -82,7 +80,8 @@ public class ServerMeasurementTask implements Callable<MeasurementResult []> {
     try {
       phoneUtils.acquireWakeLock();
 
-      if(!(phoneUtils.isCharging() || phoneUtils.getCurrentBatteryLevel() > Config.minBatteryThreshold)){
+      if(!(phoneUtils.isCharging() ||
+          phoneUtils.getCurrentBatteryLevel() > Config.minBatteryThreshold)){
         throw new MeasurementSkippedException("Not enough battery power");
       }
       if (scheduler.isPauseRequested()) {
@@ -94,7 +93,8 @@ public class ServerMeasurementTask implements Callable<MeasurementResult []> {
         contextCollector.setInterval(realTask.getDescription().contextIntervalSec);
         contextCollector.startCollector();
         results = realTask.call(); 
-        ArrayList<HashMap<String, String>> contextResults=contextCollector.stopCollector();
+        ArrayList<HashMap<String, String>> contextResults = 
+            contextCollector.stopCollector();
         broadcastMeasurementEnd(results, null);
       } catch (MeasurementError e) {
         String error = "Server measurement " + realTask.getDescriptor() 
@@ -104,12 +104,14 @@ public class ServerMeasurementTask implements Callable<MeasurementResult []> {
         broadcastMeasurementEnd(results, e);
         
       } catch (Exception e) {
-        String error = "Server measurement " + realTask.getDescriptor() + " has failed\n";
+        String error = "Server measurement " +
+            realTask.getDescriptor() + " has failed\n";
         error += "Unexpected Exception: " + e.getMessage() + "\n";
         Logger.e(error);
 
         results = MeasurementResult.getFailureResult(realTask, e);
-        broadcastMeasurementEnd(results, new MeasurementError("Got exception running task", e));
+        broadcastMeasurementEnd(results,
+          new MeasurementError("Got exception running task", e));
       }
     } finally {
       phoneUtils.releaseWakeLock();

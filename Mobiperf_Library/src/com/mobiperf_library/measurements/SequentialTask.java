@@ -1,7 +1,5 @@
 package com.mobiperf_library.measurements;
 
-
-
 import java.io.InvalidClassException;
 import java.security.InvalidParameterException;
 import java.util.ArrayList;
@@ -28,8 +26,6 @@ import android.os.Parcel;
 import android.os.Parcelable;
 
 public class SequentialTask extends MeasurementTask{
-
-  
   private List<MeasurementTask> tasks;
 
   private ExecutorService executor;
@@ -45,8 +41,9 @@ public class SequentialTask extends MeasurementTask{
   public static class SequentialDesc extends MeasurementDesc {     
 
     public SequentialDesc(String key, Date startTime,
-                          Date endTime, double intervalSec, long count, long priority, int contextIntervalSec,
-                          Map<String, String> params) throws InvalidParameterException {
+        Date endTime, double intervalSec, long count, long priority,
+        int contextIntervalSec, Map<String, String> params)
+            throws InvalidParameterException {
       super(SequentialTask.TYPE, key, startTime, endTime, intervalSec, count,
         priority, contextIntervalSec, params);  
       //      initializeParams(params);
@@ -76,16 +73,6 @@ public class SequentialTask extends MeasurementTask{
         return new SequentialDesc[size];
       }
     };
-
-    @Override
-    public int describeContents() {
-      return super.describeContents();
-    }
-
-    @Override
-    public void writeToParcel(Parcel dest, int flags) {
-      super.writeToParcel(dest, flags);
-    }
   }
 
   @SuppressWarnings("rawtypes")
@@ -96,14 +83,14 @@ public class SequentialTask extends MeasurementTask{
 
 
   public SequentialTask(MeasurementDesc desc, ArrayList<MeasurementTask> tasks) {
-    super(new SequentialDesc(desc.key, desc.startTime, desc.endTime, desc.intervalSec,
-      desc.count, desc.priority, desc.contextIntervalSec, desc.parameters));
+    super(new SequentialDesc(desc.key, desc.startTime, desc.endTime,
+      desc.intervalSec, desc.count, desc.priority, desc.contextIntervalSec,
+      desc.parameters));
     this.tasks=(List<MeasurementTask>) tasks.clone();
     executor=Executors.newSingleThreadExecutor();
     long totalduration=0;
     for(MeasurementTask mt: tasks){
       totalduration+=mt.getDuration();
-
     }
     this.duration=totalduration;
     this.stopFlag=false;
@@ -168,7 +155,9 @@ public class SequentialTask extends MeasurementTask{
         currentTask=mt;
         MeasurementResult[] r;
         try {
-          r = f.get(mt.getDuration()==0?Config.DEFAULT_TASK_DURATION_TIMEOUT*2:mt.getDuration()*2,TimeUnit.MILLISECONDS);
+          r = f.get( mt.getDuration()==0 ?
+              Config.DEFAULT_TASK_DURATION_TIMEOUT * 2 : mt.getDuration() * 2,
+              TimeUnit.MILLISECONDS);
           for(int i=0;i<r.length;i++){//TODO
             allresults.add(r[i]);
           }
@@ -177,7 +166,6 @@ public class SequentialTask extends MeasurementTask{
             f.cancel(true);
           }
         }
-
       }
 
     } catch (InterruptedException e) {
@@ -188,13 +176,6 @@ public class SequentialTask extends MeasurementTask{
     finally{
       executor.shutdown();
     }
-    
-//    MeasurementResult[] tempResults = new MeasurementResult[allresults.size()];
-//    int counter = 0;
-//    for ( MeasurementResult mr : allresults ) {
-//      tempResults[counter++] = mr;
-//    }
-//    return tempResults;
     return (MeasurementResult[])allresults.toArray(
       new MeasurementResult[allresults.size()]);
   }

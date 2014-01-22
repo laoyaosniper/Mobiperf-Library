@@ -31,9 +31,6 @@ public interface Config {
   public static final int MSG_SEND_RESULT = 4;
   public static final int MSG_CANCEL_TASK = 5;
 
-
-
-
   /** The default battery level if we cannot read it from the system */
   public static final int DEFAULT_BATTERY_LEVEL = 0;
   /** The default maximum battery level if we cannot read it from the system */
@@ -81,9 +78,4 @@ public interface Config {
   public static final long MIN_CHECKIN_INTERVAL_SEC = 3600;
   
   public static final int DEFAULT_CONTEXT_INTERVAL_SEC = 1;
-
-
-
-
-
 }

@@ -143,7 +143,7 @@ public class Checkin {
             MeasurementTask.getMeasurementTypes().contains(json.get("type"))) {
           try {
             MeasurementTask task = 
-                MeasurementJsonConvertor.makeMeasurementTaskFromJson(json, this.context);
+                MeasurementJsonConvertor.makeMeasurementTaskFromJson(json);
             Logger.i(MeasurementJsonConvertor.toJsonString(task.measurementDesc));
             schedule.add(task);
           } catch (IllegalArgumentException e) {

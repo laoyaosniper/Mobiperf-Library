@@ -1,6 +1,5 @@
 package com.mobiperf_library;
 
-
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Map;
@@ -12,9 +11,6 @@ import com.mobiperf_library.measurements.TracerouteTask;
 
 import android.os.Parcel;
 import android.os.Parcelable;
-
-
-
 
 /**
  * MeasurementDesc and all its subclasses are POJO classes that encode a measurement 
@@ -37,23 +33,26 @@ public abstract class MeasurementDesc implements Parcelable{
   /**
    * @param type Type of measurement (ping, dns, traceroute, etc.) 
    * that should execute this measurement task.
-   * @param startTime Earliest time that measurements can be taken using this Task descriptor. The
-   * current time will be used in place of a null startTime parameter. Measurements with
-   * a startTime more than 24 hours from now will NOT be run. 
-   * @param endTime Latest time that measurements can be taken using this Task descriptor. Tasks 
-   * with an endTime before startTime will be canceled. Corresponding to the 24-hour rule in
-   * startTime, tasks with endTime later than 24 hours from now will be assigned a new endTime 
-   * that ends 24 hours from now.
-   * @param intervalSec Minimum number of seconds to elapse between consecutive measurements taken 
-   * with this description.
-   * @param count Maximum number of times that a measurement should be taken with this 
-   * description. A count of 0 means to continue the measurement indefinitely (until end_time).
+   * @param startTime Earliest time that measurements can be taken using this
+   *  Task descriptor. The current time will be used in place of a null
+   *  startTime parameter. Measurements with a startTime more than 24 hours 
+   *  from now will NOT be run. 
+   * @param endTime Latest time that measurements can be taken using this Task
+   *  descriptor. Tasks with an endTime before startTime will be canceled.
+   *  Corresponding to the 24-hour rule in startTime, tasks with endTime later 
+   *  than 24 hours from now will be assigned a new endTime that ends 24 hours
+   *  from now.
+   * @param intervalSec Minimum number of seconds to elapse between consecutive
+   *  measurements taken with this description.
+   * @param count Maximum number of times that a measurement should be taken
+   *  with this description. A count of 0 means to continue the measurement 
+   *  indefinitely (until end_time).
    * @param priority Larger values represent higher priorities.
    * @param params Measurement parameters Measurement parameters.
    */
   protected MeasurementDesc(String type, String key, Date startTime, 
-                            Date endTime, double intervalSec, long count, long priority, int contextIntervalSec,
-                            Map<String, String> params ) {
+    Date endTime, double intervalSec, long count, long priority,
+    int contextIntervalSec, Map<String, String> params ) {
     super();
     this.type = type;
     this.key = key;
@@ -65,22 +64,12 @@ public abstract class MeasurementDesc implements Parcelable{
     long now = System.currentTimeMillis();
     if (endTime == null || 
         endTime.getTime() - now > Config.TASK_EXPIRATION_MSEC) {
-      this.endTime = new Date(now + Config.TASK_EXPIRATION_MSEC);
       //TODO (Ashkan) check Hongyi suggestion
-//      /** Hongyi: Task expiration time seems too long so no preemption 
-//       * will be performed. Change to specific task duration
-//       */
-//      if ( type.equals(DnsLookupTask.TYPE) ) {
-//        this.endTime = new Date(now + Config.DNS_TASK_DURATION);
-//      } else if ( type.equals(HttpTask.TYPE) ) {
-//        this.endTime = new Date(now + Config.HTTP_TASK_DURATION);
-//      } else if ( type.equals(PingTask.TYPE) ) {
-//        this.endTime = new Date(now + Config.PING_TASK_DURATION);
-//      } else if ( type.equals(TracerouteTask.TYPE) ) {
-//        this.endTime = new Date(now + Config.TRACEROUTE_TASK_DURATION);
-//      } else {
-//        this.endTime = new Date(now + Config.TASK_EXPIRATION_MSEC);
-//      }
+      /** Hongyi: Task expiration time seems too long. No preemption 
+       * will be performed without manually set end time.
+       * Change to task-specified duration?
+       */
+      this.endTime = new Date(now + Config.TASK_EXPIRATION_MSEC);
     } else {
       this.endTime = endTime;
     }
@@ -105,11 +94,6 @@ public abstract class MeasurementDesc implements Parcelable{
 
   /** Subclass override this method to initialize measurement specific parameters*/
   protected abstract void initializeParams(Map<String, String> params);
-
-  //  @Override
-  //  public String toString() {
-  ////    return "<MeasurementTask> " + this.type + " deadline:" + endTime +" params:" + parameters;
-  //  }  
 
   @Override
   public boolean equals(Object o) {
@@ -142,7 +126,6 @@ public abstract class MeasurementDesc implements Parcelable{
     count = in.readLong();
     priority = in.readLong();
     contextIntervalSec=in.readInt();
-    //      in.readMap(parameters, loader);
     parameters = in.readHashMap(loader);
   }
 

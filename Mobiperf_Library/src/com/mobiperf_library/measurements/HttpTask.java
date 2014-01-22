@@ -71,7 +71,8 @@ public class HttpTask extends MeasurementTask {
   public static final int MAX_BODY_SIZE_TO_UPLOAD = 1024;
   // The buffer size we use to read from the HTTP response stream
   public static final int READ_BUFFER_SIZE = 1024;
-  // Not used by the HTTP protocol. Just in case we do not receive a status line from the response
+  // Not used by the HTTP protocol. Just in case we do not receive a status line
+  // from the response
   public static final int DEFAULT_STATUS_CODE = 0;
 
   private AndroidHttpClient httpClient = null;
@@ -89,8 +90,8 @@ public class HttpTask extends MeasurementTask {
     duration = in.readLong();
   }
 
-  public static final Parcelable.Creator<HttpTask> CREATOR
-  = new Parcelable.Creator<HttpTask>() {
+  public static final Parcelable.Creator<HttpTask> CREATOR =
+      new Parcelable.Creator<HttpTask>() {
     public HttpTask createFromParcel(Parcel in) {
       return new HttpTask(in);
     }
@@ -99,11 +100,6 @@ public class HttpTask extends MeasurementTask {
       return new HttpTask[size];
     }
   };
-
-  @Override
-  public int describeContents() {
-    return super.describeContents();
-  }
 
   @Override
   public void writeToParcel(Parcel dest, int flags) {
@@ -120,9 +116,10 @@ public class HttpTask extends MeasurementTask {
     private String body;
 
     public HttpDesc(String key, Date startTime, Date endTime,
-                    double intervalSec, long count, long priority, int contextIntervalSec,  Map<String, String> params) 
-                        throws InvalidParameterException {
-      super(HttpTask.TYPE, key, startTime, endTime, intervalSec, count, priority,contextIntervalSec, params);
+        double intervalSec, long count, long priority, int contextIntervalSec,
+        Map<String, String> params) throws InvalidParameterException {
+      super(HttpTask.TYPE, key, startTime, endTime, intervalSec, count,
+        priority,contextIntervalSec, params);
       initializeParams(params);
       if (this.url == null || this.url.length() == 0) {
         throw new InvalidParameterException("URL for http task is null");
@@ -163,8 +160,8 @@ public class HttpTask extends MeasurementTask {
       body = in.readString();
     }
 
-    public static final Parcelable.Creator<HttpDesc> CREATOR
-    = new Parcelable.Creator<HttpDesc>() {
+    public static final Parcelable.Creator<HttpDesc> CREATOR =
+        new Parcelable.Creator<HttpDesc>() {
       public HttpDesc createFromParcel(Parcel in) {
         return new HttpDesc(in);
       }
@@ -173,11 +170,6 @@ public class HttpTask extends MeasurementTask {
         return new HttpDesc[size];
       }
     };
-
-    @Override
-    public int describeContents() {
-      return super.describeContents();
-    }
 
     @Override
     public void writeToParcel(Parcel dest, int flags) {
@@ -196,11 +188,13 @@ public class HttpTask extends MeasurementTask {
   public MeasurementTask clone() {
     MeasurementDesc desc = this.measurementDesc;
     HttpDesc newDesc = new HttpDesc(desc.key, desc.startTime, desc.endTime, 
-      desc.intervalSec, desc.count, desc.priority, desc.contextIntervalSec, desc.parameters);
+      desc.intervalSec, desc.count, desc.priority, desc.contextIntervalSec,
+      desc.parameters);
     return new HttpTask(newDesc);
   }
 
-  /** Runs the HTTP measurement task. Will acquire power lock to ensure wifi is not turned off */
+  /** Runs the HTTP measurement task. Will acquire power lock to ensure wifi
+   *  is not turned off */
   @Override
   public MeasurementResult[] call() throws MeasurementError {
 
@@ -273,11 +267,10 @@ public class HttpTask extends MeasurementTask {
         else{
           taskProgress=TaskProgress.FAILED;
         }
-        //        success = ();
       }
 
-      /* For HttpClient to work properly, we still want to consume the entire response even if
-       * the status code is not 200 
+      /* For HttpClient to work properly, we still want to consume the entire
+       * response even if the status code is not 200 
        */
       HttpEntity responseEntity = response.getEntity();      
       originalBodyLen = responseEntity.getContentLength();
@@ -297,8 +290,6 @@ public class HttpTask extends MeasurementTask {
             int putLen = body.remaining() < readLen ? body.remaining() : readLen; 
             body.put(readBuffer, 0, putLen);
           }
-
-
         }
         duration = System.currentTimeMillis() - startTime;//TODO check this
       }
@@ -320,8 +311,9 @@ public class HttpTask extends MeasurementTask {
 
       PhoneUtils phoneUtils = PhoneUtils.getPhoneUtils();
 
-      MeasurementResult result = new MeasurementResult(phoneUtils.getDeviceInfo().deviceId,
-        phoneUtils.getDeviceProperty(), HttpTask.TYPE, System.currentTimeMillis() * 1000,
+      MeasurementResult result = new MeasurementResult(
+        phoneUtils.getDeviceInfo().deviceId, phoneUtils.getDeviceProperty(),
+        HttpTask.TYPE, System.currentTimeMillis() * 1000,
         taskProgress, this.measurementDesc);
 
       result.addResult("code", statusCode);
@@ -331,7 +323,8 @@ public class HttpTask extends MeasurementTask {
         result.addResult("headers_len", originalHeadersLen);
         result.addResult("body_len", totalBodyLen);
         result.addResult("headers", headers);
-        result.addResult("body", Base64.encodeToString(body.array(), Base64.DEFAULT));
+        result.addResult("body", Base64.encodeToString(body.array(),
+          Base64.DEFAULT));
       }
 
       Logger.i(MeasurementJsonConvertor.toJsonString(result));
@@ -357,8 +350,8 @@ public class HttpTask extends MeasurementTask {
       }
 
     }
-    throw new MeasurementError("Cannot get result from HTTP measurement because " + 
-        errorMsg);
+    throw new MeasurementError("Cannot get result from HTTP measurement because "
+        + errorMsg);
   }  
 
   @SuppressWarnings("rawtypes")
@@ -379,15 +372,13 @@ public class HttpTask extends MeasurementTask {
   @Override
   public String toString() {
     HttpDesc desc = (HttpDesc) measurementDesc;
-    return "[HTTP " + desc.method + "]\n  Target: " + desc.url + "\n  Interval (sec): " + 
-    desc.intervalSec + "\n  Next run: " + desc.startTime;
+    return "[HTTP " + desc.method + "]\n  Target: " + desc.url +
+        "\n  Interval (sec): " + desc.intervalSec + "\n  Next run: " +
+        desc.startTime;
   }
 
   @Override
   public boolean stop() {
-    //    if (httpClient != null) {
-    //      httpClient.close();
-    //    }
     return false;
   }
 

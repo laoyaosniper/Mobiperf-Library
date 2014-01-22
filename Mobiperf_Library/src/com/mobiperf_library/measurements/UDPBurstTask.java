@@ -209,11 +209,6 @@ public class UDPBurstTask extends MeasurementTask {
         return new UDPBurstDesc[size];
       }
     };
-
-    @Override
-    public int describeContents() {
-      return super.describeContents();
-    }
     
     @Override
     public void writeToParcel(Parcel dest, int flags) {
@@ -235,12 +230,39 @@ public class UDPBurstTask extends MeasurementTask {
 
   public UDPBurstTask(MeasurementDesc desc) {
     super(new UDPBurstDesc(desc.key, desc.startTime, desc.endTime,
-      desc.intervalSec, desc.count, desc.priority, desc.contextIntervalSec, desc.parameters));
+      desc.intervalSec, desc.count, desc.priority, desc.contextIntervalSec,
+      desc.parameters));
     this.taskProgress=TaskProgress.FAILED;
     this.stopFlag=false;
     this.duration=Config.DEFAULT_UDPBURST_DURATION;
   }
 
+  protected UDPBurstTask(Parcel in) {
+    super(in);
+    taskProgress = (TaskProgress)in.readSerializable();
+    stopFlag = in.readByte() != 0;
+    duration = in.readLong();
+  }
+
+  public static final Parcelable.Creator<UDPBurstTask> CREATOR =
+      new Parcelable.Creator<UDPBurstTask>() {
+    public UDPBurstTask createFromParcel(Parcel in) {
+      return new UDPBurstTask(in);
+    }
+
+    public UDPBurstTask[] newArray(int size) {
+      return new UDPBurstTask[size];
+    }
+  };
+
+  @Override
+  public void writeToParcel(Parcel dest, int flags) {
+    super.writeToParcel(dest, flags);
+    dest.writeSerializable(taskProgress);
+    dest.writeByte((byte) (stopFlag ? 1 : 0));
+    dest.writeLong(duration);
+  }
+  
   /**
    * Make a deep cloning of the task
    */
@@ -798,10 +820,7 @@ public class UDPBurstTask extends MeasurementTask {
   public String getDescriptor() {
     return UDPBurstTask.DESCRIPTOR;
   }
-
-
-
-
+  
   /**
    * This will be printed to the device log console. Make sure it's well
    * structured and human readable

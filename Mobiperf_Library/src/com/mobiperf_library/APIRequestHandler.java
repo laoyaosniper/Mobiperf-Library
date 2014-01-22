@@ -66,7 +66,8 @@ public class APIRequestHandler extends Handler {
           Logger.d("Hongyi: Add new task! taskId " + task.getTaskId());
           
 //          // Hongyi: for test
-//          task.measurementDesc.parameters.put("secondTimestamp", String.valueOf(System.currentTimeMillis()));
+//          task.measurementDesc.parameters.put("secondTimestamp"
+//            , String.valueOf(System.currentTimeMillis()));
           
           taskId = scheduler.submitTask(task);
         }

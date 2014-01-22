@@ -109,20 +109,23 @@ public class MeasurementResult implements Parcelable {
     return result.toString();
   }
   
-  public static MeasurementResult[] getFailureResult(MeasurementTask task, Throwable error) {
+  public static MeasurementResult[] getFailureResult(MeasurementTask task,
+    Throwable error) {
     PhoneUtils phoneUtils = PhoneUtils.getPhoneUtils();
     ArrayList<MeasurementResult> results = new ArrayList<MeasurementResult>();
     
     if ( task.getType().equals(ParallelTask.TYPE) ) {
       ParallelTask pTask = (ParallelTask)task;
-      MeasurementResult[] tempResults = MeasurementResult.getFailureResults(pTask.getTasks(), error);
+      MeasurementResult[] tempResults = MeasurementResult.getFailureResults(
+        pTask.getTasks(), error);
       for ( MeasurementResult r : tempResults ) {
         results.add(r);
       }
     }
     else if (task.getType().equals(SequentialTask.TYPE) ) {
       SequentialTask sTask = (SequentialTask)task;
-      MeasurementResult[] tempResults = MeasurementResult.getFailureResults(sTask.getTasks(), error);
+      MeasurementResult[] tempResults = MeasurementResult.getFailureResults(
+        sTask.getTasks(), error);
       for ( MeasurementResult r : tempResults ) {
         results.add(r);
       }
@@ -169,10 +172,6 @@ public class MeasurementResult implements Parcelable {
   public void setTaskProgress(TaskProgress progress) {
     this.taskProgress = progress;
   }
-  
-//  public String getTaskKey() {
-//    return this.measurementDesc.key;
-//  }
 
   public boolean isSucceed() {
     return this.success;
@@ -184,14 +183,6 @@ public class MeasurementResult implements Parcelable {
         MeasurementJsonConvertor.toJsonString(resultVal));
   }
 
-  // public String toString() {
-  // return "TaskKey: " + taskKey + ", Type:" + type + ", Timestamp:" +
-  // timestamp
-  // + ", Property:" + properties.isBatteryCharging + ", measurementDesc:" +
-  // measurementDesc.intervalSec
-  // + ", DeviceId:" + deviceId;
-  // }
-
   /* Returns a string representation of the result */
   @Override
   public String toString() {
@@ -199,22 +190,7 @@ public class MeasurementResult implements Parcelable {
     StringBuilderPrinter printer = new StringBuilderPrinter(builder);
     Formatter format = new Formatter();
 //    String results=getContextResult();
-    try {
-
-//      // Hongyi: for test
-//      String tss1 = measurementDesc.parameters.get("firstTimestamp");
-//      String tss2 = measurementDesc.parameters.get("secondTimestamp");
-//      long ts1 = 0, ts2 = 0;
-//      if ( tss1 != null ) {
-//        ts1 = Long.parseLong(tss1);
-//      }
-//      if ( tss2 != null ) {
-//        ts2 = Long.parseLong(tss2);
-//      }
-//      printer.println("haha");
-//      printer.println("ts1 = " + ts1 + ", ts2 = " + ts2);
-//      printer.println("Delay of API to Scheduler: " + (ts2 - ts1));
-      
+    try {      
       if (type.equals(PingTask.TYPE)) {
         getPingResult(printer, values);
       } else if (type.equals(HttpTask.TYPE)) {
@@ -507,7 +483,8 @@ public class MeasurementResult implements Parcelable {
 
   }
 
-  public static final Parcelable.Creator<MeasurementResult> CREATOR = new Parcelable.Creator<MeasurementResult>() {
+  public static final Parcelable.Creator<MeasurementResult> CREATOR = 
+      new Parcelable.Creator<MeasurementResult>() {
     public MeasurementResult createFromParcel(Parcel in) {
       return new MeasurementResult(in);
     }

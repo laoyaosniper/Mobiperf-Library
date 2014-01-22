@@ -41,14 +41,15 @@ import com.mobiperf_library.Config;
 public class Util {
     
   /**
-   * Filter out values equal or beyond the bounds and then compute the average of valid data
+   * Filter out values equal or beyond the bounds and then compute the average
+   * of valid data
    * @param vals the list of values to be filtered
    * @param lowerBound the lower bound of valid data
    * @param upperBound the upper bound of valid data
    * @return a list of filtered data within the specified bounds
    */
-  public static ArrayList<Double> applyInnerBandFilter(ArrayList<Double> vals, double lowerBound, 
-      double upperBound) throws InvalidParameterException {
+  public static ArrayList<Double> applyInnerBandFilter(ArrayList<Double> vals,
+    double lowerBound, double upperBound) throws InvalidParameterException {
     
     double rrtTotal = 0;
     int initResultLen = vals.size();
@@ -84,11 +85,13 @@ public class Util {
     return sum;
   }
   
-  public static String constructCommand(Object... strings) throws InvalidParameterException {
+  public static String constructCommand(Object... strings)
+      throws InvalidParameterException {
     String finalCommand = "";
     int len = strings.length;
     if (len < 0) {
-      throw new InvalidParameterException("0 arguments passed in for constructing command");
+      throw new InvalidParameterException("0 arguments passed in for " +
+          "constructing command");
     }
     
     for (int i = 0; i < len - 1; i++) {
@@ -168,7 +171,8 @@ public class Util {
       Matcher matcher = pattern.matcher(outputLine);
       matcher.find();
       
-      return new int[] {Integer.parseInt(matcher.group(1)), Integer.parseInt(matcher.group(2))};
+      return new int[] {Integer.parseInt(matcher.group(1)),
+                        Integer.parseInt(matcher.group(2))};
     } catch (IllegalStateException e) {
       return null;
     } catch (NumberFormatException e) {
@@ -221,17 +225,7 @@ public class Util {
       }
     }
     return pingExecutable;
-  }
-  
-  public static BigInteger getMD5(String text) throws NoSuchAlgorithmException{
-	  MessageDigest m = MessageDigest.getInstance("MD5");
-	  m.reset();
-	  m.update(text.getBytes());
-	  byte[] digest = m.digest();
-	  BigInteger bigInt = new BigInteger(1,digest);
-	  return bigInt;
-  }
-  
+  }  
   
   public static String generateClientKey(){
 	  String result="";

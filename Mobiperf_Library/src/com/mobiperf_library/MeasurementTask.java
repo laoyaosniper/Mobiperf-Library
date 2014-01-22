@@ -18,7 +18,8 @@ import com.mobiperf_library.measurements.UDPBurstTask;
 import android.os.Parcel;
 import android.os.Parcelable;
 
-public abstract class MeasurementTask implements Callable<MeasurementResult[]>, Comparable, Parcelable {
+public abstract class MeasurementTask
+    implements Callable<MeasurementResult[]>, Comparable, Parcelable {
   protected MeasurementDesc measurementDesc;
   protected String taskId;
   //  protected Context parent;
@@ -65,8 +66,10 @@ public abstract class MeasurementTask implements Callable<MeasurementResult[]>, 
   public int compareTo(Object t) {
     MeasurementTask another = (MeasurementTask) t;
 
-    if (this.measurementDesc.startTime != null && another.measurementDesc.startTime != null) {
-      return this.measurementDesc.startTime.compareTo(another.measurementDesc.startTime);
+    if (this.measurementDesc.startTime != null &&
+        another.measurementDesc.startTime != null) {
+      return this.measurementDesc.startTime.compareTo(
+        another.measurementDesc.startTime);
     }
     return 0;
   }  
@@ -111,8 +114,8 @@ public abstract class MeasurementTask implements Callable<MeasurementResult[]>, 
     return measurementTypes.keySet();
   }
 
-  /** Get the type of a measurement based on its name. Type is for JSON interface only
-   * where as measurement name is a readable string for the UI */
+  /** Get the type of a measurement based on its name. Type is for JSON 
+   * interface only where as measurement name is a readable string for the UI */
   public static String getTypeForMeasurementName(String name) {
     return measurementDescToType.get(name);
   }
@@ -122,8 +125,8 @@ public abstract class MeasurementTask implements Callable<MeasurementResult[]>, 
   }
 
   /* This is put here for consistency that all MeasurementTask should
-   * have a getDescClassForMeasurement() method. However, the MeasurementDesc is abstract 
-   * and cannot be instantiated */
+   * have a getDescClassForMeasurement() method. However, the MeasurementDesc 
+   * is abstract and cannot be instantiated */
   public static Class getDescClass() throws InvalidClassException {
     throw new InvalidClassException("getDescClass() should only be invoked on "
         + "subclasses of MeasurementTask.");
@@ -144,16 +147,6 @@ public abstract class MeasurementTask implements Callable<MeasurementResult[]>, 
   /** Return the string indicating the measurement type. */
   public abstract String getType();
 
-
-
-  //    @Override//TODO
-  //    public String toString() {
-  //      String result = "[Measurement " + getDescriptor() + " scheduled to run at " + 
-  //          getDescription().startTime + "]";
-  //      
-  //      return this.measurementDesc.toString();
-  //    }
-
   @Override
   public abstract MeasurementTask clone();
 
@@ -171,7 +164,8 @@ public abstract class MeasurementTask implements Callable<MeasurementResult[]>, 
   @Override
   public boolean equals(Object o) {
     MeasurementTask another=(MeasurementTask)o;
-    if(this.getDescription().equals(another.getDescription()) && this.getType().equals(another.getType())){
+    if(this.getDescription().equals(another.getDescription()) &&
+        this.getType().equals(another.getType())){
       return true;
     }
     return false;
@@ -180,10 +174,11 @@ public abstract class MeasurementTask implements Callable<MeasurementResult[]>, 
   @Override
   public int hashCode() {
     StringBuilder taskstrbld=new StringBuilder(getMeasurementType());
-    taskstrbld.append(",").append(this.measurementDesc.key).append(",").append(this.measurementDesc.startTime)
-    .append(",").append(this.measurementDesc.endTime).append(",").append(this.measurementDesc.intervalSec)
+    taskstrbld.append(",").append(this.measurementDesc.key)
+    .append(",").append(this.measurementDesc.startTime)
+    .append(",").append(this.measurementDesc.endTime)
+    .append(",").append(this.measurementDesc.intervalSec)
     .append(",").append(this.measurementDesc.priority);
-    //.append(",").append(this.measurementDesc.count)
 
     Object [] keys=this.measurementDesc.parameters.keySet().toArray();
     Arrays.sort(keys);
@@ -192,18 +187,6 @@ public abstract class MeasurementTask implements Callable<MeasurementResult[]>, 
     }
 
     return taskstrbld.toString().hashCode();
-
-    //    BigInteger bigInt=null;
-    //    try {
-    //      bigInt=Util.getMD5(taskstr);
-    //    } catch (NoSuchAlgorithmException e) {
-    //      Logger.e("Error in getting the MD5 hash");
-    //      return -1;
-    //    }
-
-    //    return bigInt.intValue();
-
-
   }
 
   /**

@@ -15,7 +15,6 @@ import java.util.Date;
 import java.util.Map;
 import java.util.Random;
 
-import com.mobiperf_library.Config;
 import com.mobiperf_library.MeasurementDesc;
 import com.mobiperf_library.MeasurementResult;
 import com.mobiperf_library.MeasurementTask;
@@ -34,13 +33,14 @@ import android.os.Parcelable;
  * @author Haokun Luo
  * 
  * TCP Throughput is a measurement task for cellular network throughput.
- * 1. Uplink: the mobile device continuously sends packets with consistent packet size.
- *    We send packets for a fixed amount of time, and we sample each throughput value
- *    at a smaller period. We use the median of all the sampling result as the final
- *    measurement result. The result is calculated at the server side, and send back
- *    to the device.
- * 2. Downlink: similar methodology as uplink. Only difference is that the device is
- *    receiving packets from the server, and calculate the result locally. 
+ * 1. Uplink: the mobile device continuously sends packets with consistent 
+ *    packet size. We send packets for a fixed amount of time, and we sample
+ *    each throughput value at a smaller period. We use the median of all the 
+ *    sampling result as the final measurement result. The result is calculated 
+ *    at the server side, and send back to the device.
+ * 2. Downlink: similar methodology as uplink. Only difference is that the
+ *    device is receiving packets from the server, and calculate the result
+ *    locally. 
  */
 public class TCPThroughputTask extends MeasurementTask {
   // default constant here
@@ -102,6 +102,32 @@ public class TCPThroughputTask extends MeasurementTask {
     Logger.i("Create new throughput task");
   }
 
+
+  protected TCPThroughputTask(Parcel in) {
+    super(in);
+    taskProgress = (TaskProgress)in.readSerializable();
+    stopFlag = in.readByte() != 0;
+    duration = in.readLong();
+  }
+
+  public static final Parcelable.Creator<TCPThroughputTask> CREATOR =
+      new Parcelable.Creator<TCPThroughputTask>() {
+    public TCPThroughputTask createFromParcel(Parcel in) {
+      return new TCPThroughputTask(in);
+    }
+
+    public TCPThroughputTask[] newArray(int size) {
+      return new TCPThroughputTask[size];
+    }
+  };
+
+  @Override
+  public void writeToParcel(Parcel dest, int flags) {
+    super.writeToParcel(dest, flags);
+    dest.writeSerializable(taskProgress);
+    dest.writeByte((byte) (stopFlag ? 1 : 0));
+    dest.writeLong(duration);
+  }
   /**
    * There are seven parameters specifically for this experiment:
    * 1. data_limit_mb_up: uplink cellular network data limit
@@ -115,20 +141,26 @@ public class TCPThroughputTask extends MeasurementTask {
 
   public static class TCPThroughputDesc extends MeasurementDesc {
     // declared parameters
-    public double  data_limit_mb_up = TCPThroughputTask.DATA_LIMIT_MB_UP;
-    public double  data_limit_mb_down = TCPThroughputTask.DATA_LIMIT_MB_DOWN;
+    public double  data_limit_mb_up =
+        TCPThroughputTask.DATA_LIMIT_MB_UP;
+    public double  data_limit_mb_down =
+        TCPThroughputTask.DATA_LIMIT_MB_DOWN;
     public boolean dir_up = false;
-    public double  duration_period_sec = TCPThroughputTask.DURATION_IN_SEC;
-    public int     pkt_size_up_bytes = TCPThroughputTask.THROUGHPUT_UP_PKT_SIZE_MAX;
-    public double  sample_period_sec = TCPThroughputTask.SAMPLE_PERIOD_IN_SEC;
-    public double  slow_start_period_sec = TCPThroughputTask.SLOW_START_PERIOD_IN_SEC;
+    public double  duration_period_sec =
+        TCPThroughputTask.DURATION_IN_SEC;
+    public int     pkt_size_up_bytes =
+        TCPThroughputTask.THROUGHPUT_UP_PKT_SIZE_MAX;
+    public double  sample_period_sec =
+        TCPThroughputTask.SAMPLE_PERIOD_IN_SEC;
+    public double  slow_start_period_sec =
+        TCPThroughputTask.SLOW_START_PERIOD_IN_SEC;
     public String  target = null;
     public double  tcp_timeout_sec = TCPThroughputTask.TCP_TIMEOUT_IN_SEC;
 
     public TCPThroughputDesc(String key, Date startTime,
-                             Date endTime, double intervalSec, long count, 
-                             long priority, int contextIntervalSec, Map<String, String> params) 
-                                 throws InvalidParameterException {
+        Date endTime, double intervalSec, long count, 
+        long priority, int contextIntervalSec, Map<String, String> params) 
+        throws InvalidParameterException {
       super(TCPThroughputTask.TYPE, key, startTime, endTime, intervalSec, count,
         priority, contextIntervalSec, params);
       initializeParams(params);
@@ -191,30 +223,30 @@ public class TCPThroughputTask extends MeasurementTask {
 
       try {
         String readVal = null;
-        if ((readVal = params.get("data_limit_mb_down")) != null && readVal.length() > 0 
-            && Integer.parseInt(readVal) > 0) {
+        if ((readVal = params.get("data_limit_mb_down")) != null &&
+            readVal.length() > 0 && Integer.parseInt(readVal) > 0) {
           this.data_limit_mb_down = Double.parseDouble(readVal);
           if (this.data_limit_mb_down > TCPThroughputTask.DATA_LIMIT_MB_DOWN) {
             this.data_limit_mb_down = TCPThroughputTask.DATA_LIMIT_MB_DOWN;
           }
         }
 
-        if ((readVal = params.get("data_limit_mb_up")) != null && readVal.length() > 0 
-            && Integer.parseInt(readVal) > 0) {
+        if ((readVal = params.get("data_limit_mb_up")) != null &&
+            readVal.length() > 0 && Integer.parseInt(readVal) > 0) {
           this.data_limit_mb_up = Double.parseDouble(readVal);
           if (this.data_limit_mb_up > TCPThroughputTask.DATA_LIMIT_MB_UP) {
             this.data_limit_mb_up = TCPThroughputTask.DATA_LIMIT_MB_UP;
           }
         }
-        if ((readVal = params.get("duration_period_sec")) != null && readVal.length() > 0 
-            && Integer.parseInt(readVal) > 0) {
+        if ((readVal = params.get("duration_period_sec")) != null &&
+            readVal.length() > 0 && Integer.parseInt(readVal) > 0) {
           this.duration_period_sec = Double.parseDouble(readVal);
           if (this.duration_period_sec > TCPThroughputTask.DURATION_IN_SEC) {
             this.duration_period_sec = TCPThroughputTask.DURATION_IN_SEC;
           }
         }
-        if ((readVal = params.get("pkt_size_up_bytes")) != null && readVal.length() > 0 
-            && Integer.parseInt(readVal) > 0) {
+        if ((readVal = params.get("pkt_size_up_bytes")) != null &&
+            readVal.length() > 0 && Integer.parseInt(readVal) > 0) {
           this.pkt_size_up_bytes = Integer.parseInt(readVal);
           if (this.pkt_size_up_bytes > TCPThroughputTask.THROUGHPUT_UP_PKT_SIZE_MAX) {
             this.pkt_size_up_bytes = TCPThroughputTask.THROUGHPUT_UP_PKT_SIZE_MAX;
@@ -223,8 +255,8 @@ public class TCPThroughputTask extends MeasurementTask {
             this.pkt_size_up_bytes = TCPThroughputTask.THROUGHPUT_UP_PKT_SIZE_MIN;
           }
         }
-        if ((readVal = params.get("sample_period_sec")) != null && readVal.length() > 0 
-            && Integer.parseInt(readVal) > 0) {
+        if ((readVal = params.get("sample_period_sec")) != null &&
+            readVal.length() > 0 && Integer.parseInt(readVal) > 0) {
           this.sample_period_sec = Double.parseDouble(readVal);
           if (this.sample_period_sec > TCPThroughputTask.DURATION_IN_SEC/2) {
             this.sample_period_sec = TCPThroughputTask.DURATION_IN_SEC/2;
@@ -237,8 +269,8 @@ public class TCPThroughputTask extends MeasurementTask {
             this.slow_start_period_sec = TCPThroughputTask.DURATION_IN_SEC/2;
           }
         }
-        if ((readVal = params.get("tcp_timeout_sec")) != null && readVal.length() > 0 
-            && Integer.parseInt(readVal) > 0) {
+        if ((readVal = params.get("tcp_timeout_sec")) != null &&
+            readVal.length() > 0 && Integer.parseInt(readVal) > 0) {
           this.tcp_timeout_sec = Integer.parseInt(readVal)*1000;
           if (this.tcp_timeout_sec > TCPThroughputTask.TCP_TIMEOUT_IN_SEC) {
             this.tcp_timeout_sec = TCPThroughputTask.TCP_TIMEOUT_IN_SEC;
@@ -278,7 +310,8 @@ public class TCPThroughputTask extends MeasurementTask {
         return -1;
       }
 
-      String[] splitResult = outputInJSON.substring(1, outputInJSON.length()-1).split(",");
+      String[] splitResult = outputInJSON.substring(1,
+        outputInJSON.length()-1).split(",");
       int resultLen = splitResult.length;
       if (resultLen <= 0)
         return 0.0;
@@ -317,8 +350,8 @@ public class TCPThroughputTask extends MeasurementTask {
   }
 
   /** 
-   * This will be printed to the device log console. Make sure it's well structured and
-   * human readable
+   * This will be printed to the device log console. Make sure it's well
+   * structured and human readable
    */
   @Override
   public String toString() {
@@ -497,9 +530,11 @@ public class TCPThroughputTask extends MeasurementTask {
 
     long startTime = System.currentTimeMillis();
     long endTime = startTime;
-    int  data_limit_byte_up = (int)(((TCPThroughputDesc)measurementDesc).data_limit_mb_up
+    int  data_limit_byte_up =
+        (int)(((TCPThroughputDesc)measurementDesc).data_limit_mb_up
         *this.KBYTE*this.KBYTE);
-    byte[] uplinkBuffer = new byte[((TCPThroughputDesc)measurementDesc).pkt_size_up_bytes];
+    byte[] uplinkBuffer =
+        new byte[((TCPThroughputDesc)measurementDesc).pkt_size_up_bytes];
     this.genRandomByteArray(uplinkBuffer);
     try {
 
@@ -548,7 +583,8 @@ public class TCPThroughputTask extends MeasurementTask {
         double sampleResult;
         for (int i = 0; i < tps_result_str.length; i++) {
           sampleResult = Double.valueOf(tps_result_str[i]);
-          this.samplingResults = this.insertWithOrder(this.samplingResults, sampleResult);
+          this.samplingResults = this.insertWithOrder(this.samplingResults,
+            sampleResult);
         }
       }
       Logger.i("Total number of sampling result is " + this.samplingResults.size());
@@ -570,7 +606,8 @@ public class TCPThroughputTask extends MeasurementTask {
    * Downlink measurement task
    */
   private void downlink() throws MeasurementError, IOException {
-    Logger.i("Start downlink task on " + ((TCPThroughputDesc)measurementDesc).target);
+    Logger.i("Start downlink task on " +
+        ((TCPThroughputDesc)measurementDesc).target);
     Socket tcpSocket = null;
     InputStream iStream = null;
     try {
@@ -618,8 +655,10 @@ public class TCPThroughputTask extends MeasurementTask {
       // convert milliseconds to seconds
       this.taskDuration = (System.currentTimeMillis() - 
           (double) this.taskStartTime) / 1000.0;
-      Logger.i("Total download data is " + (double)this.totalRevSize/(1024*1024) + " MB");
-      Logger.i("Total number of sampling result is " + this.samplingResults.size());
+      Logger.i("Total download data is " +
+          (double)this.totalRevSize/(1024*1024) + " MB");
+      Logger.i("Total number of sampling result is " +
+          this.samplingResults.size());
 
     } catch (OutOfMemoryError e) {
       throw new MeasurementError("Detect out of memory at Downlink task.");
@@ -642,7 +681,7 @@ public class TCPThroughputTask extends MeasurementTask {
   private void updateSize(int delta) {
     double gtime = System.currentTimeMillis() - this.taskStartTime;
     //ignore slow start
-    if (gtime < ((TCPThroughputDesc)measurementDesc).slow_start_period_sec*this.KSEC)
+    if (gtime<((TCPThroughputDesc)measurementDesc).slow_start_period_sec*this.KSEC)
       return;
     if (this.startSampleTime == 0) {
       this.startSampleTime = System.currentTimeMillis();

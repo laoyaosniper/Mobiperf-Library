@@ -1,7 +1,5 @@
 package com.mobiperf_library.util;
 
-
-
 import android.content.Context;
 
 import java.io.InputStream;
@@ -36,7 +34,8 @@ import org.json.JSONObject;
 
 public class MLabNS {
 
-  /** Used by measurement tests if MLabNS should be used to retrieve the real server target. */
+  /** Used by measurement tests if MLabNS should be used 
+   * to retrieve the real server target. */
   static public final String TARGET = "mlab";
 
   /**
@@ -82,7 +81,8 @@ public class MLabNS {
       HttpResponse response = httpClient.execute(request);
       if (response.getStatusLine().getStatusCode() != 200) {
         throw new InvalidParameterException(
-            "Received status " + response.getStatusLine().getStatusCode() + " from mlab-ns");
+            "Received status " + response.getStatusLine().getStatusCode() +
+            " from mlab-ns");
       }
       Logger.d("STATUS OK");
 
@@ -101,14 +101,14 @@ public class MLabNS {
         mlabNSResult.add(String.valueOf(json.getString(field)));
       } else {
         throw new InvalidParameterException("Unknown type " + 
-                                            json.get(field).getClass().toString() + 
-                                            " of value " + json.get(field));
+          json.get(field).getClass().toString() + " of value " + json.get(field));
       }
       return mlabNSResult;
     } catch (SocketTimeoutException e) {
       Logger.e("SocketTimeoutException trying to contact m-lab-ns");
       // e.getMessage() is null       
-      throw new InvalidParameterException("Connect to m-lab-ns timeout. Please try again.");
+      throw new InvalidParameterException("Connect to m-lab-ns timeout. " + 
+          "Please try again.");
     } catch (IOException e) {
       Logger.e("IOException trying to contact m-lab-ns: " + e.getMessage());
       throw new InvalidParameterException(e.getMessage());
@@ -126,7 +126,8 @@ public class MLabNS {
     }
   }
 
-  static private String getContentCharSet(final HttpEntity entity) throws ParseException {
+  static private String getContentCharSet(final HttpEntity entity)
+      throws ParseException {
     if (entity == null) {
       throw new IllegalArgumentException("entity may not be null");
     }
@@ -162,7 +163,8 @@ public class MLabNS {
     }
 
     if (entity.getContentLength() > Integer.MAX_VALUE) {
-      throw new IllegalArgumentException("HTTP entity too large to be buffered into memory");
+      throw new IllegalArgumentException("HTTP entity too large to be " +
+          "buffered into memory");
     }
 
     String charset = getContentCharSet(entity);
@@ -187,7 +189,8 @@ public class MLabNS {
     return buffer.toString();
   }
 
-  static private String getResponseBody(HttpResponse response) throws IllegalArgumentException {
+  static private String getResponseBody(HttpResponse response)
+      throws IllegalArgumentException {
     String response_text = null;
     HttpEntity entity = null;
 

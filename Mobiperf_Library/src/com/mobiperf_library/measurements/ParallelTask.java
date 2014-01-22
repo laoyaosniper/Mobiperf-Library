@@ -41,8 +41,9 @@ public class ParallelTask extends MeasurementTask{
   public static class ParallelDesc extends MeasurementDesc {     
 
     public ParallelDesc(String key, Date startTime,
-                        Date endTime, double intervalSec, long count, long priority, int contextIntervalSec,  
-                        Map<String, String> params) throws InvalidParameterException {
+        Date endTime, double intervalSec, long count, long priority,
+        int contextIntervalSec, Map<String, String> params)
+            throws InvalidParameterException {
       super(ParallelTask.TYPE, key, startTime, endTime, intervalSec, count,
         priority, contextIntervalSec, params);  
       //      initializeParams(params);
@@ -59,12 +60,11 @@ public class ParallelTask extends MeasurementTask{
     }   
     
     protected ParallelDesc(Parcel in) {
-      super(in);
-      
+      super(in);      
     }
 
-    public static final Parcelable.Creator<ParallelDesc> CREATOR
-    = new Parcelable.Creator<ParallelDesc>() {
+    public static final Parcelable.Creator<ParallelDesc> CREATOR =
+        new Parcelable.Creator<ParallelDesc>() {
       public ParallelDesc createFromParcel(Parcel in) {
         return new ParallelDesc(in);
       }
@@ -73,16 +73,6 @@ public class ParallelTask extends MeasurementTask{
         return new ParallelDesc[size];
       }
     };
-
-    @Override
-    public int describeContents() {
-      return super.describeContents();
-    }
-
-    @Override
-    public void writeToParcel(Parcel dest, int flags) {
-      super.writeToParcel(dest, flags);
-    }
   }
 
   @SuppressWarnings("rawtypes")
@@ -124,7 +114,7 @@ public class ParallelTask extends MeasurementTask{
   }
 
   public static final Parcelable.Creator<ParallelTask> CREATOR
-  = new Parcelable.Creator<ParallelTask>() {
+      = new Parcelable.Creator<ParallelTask>() {
     public ParallelTask createFromParcel(Parcel in) {
       return new ParallelTask(in);
     }
