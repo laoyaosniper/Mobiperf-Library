@@ -36,6 +36,7 @@ import com.mobiperf_library.Config;
 import com.mobiperf_library.MeasurementResult;
 import com.mobiperf_library.MeasurementScheduler;
 import com.mobiperf_library.MeasurementTask;
+import com.mobiperf_library.UpdateIntent;
 import com.mobiperf_library.exceptions.MeasurementError;
 import com.mobiperf_library.measurements.DnsLookupTask;
 import com.mobiperf_library.measurements.DnsLookupTask.DnsLookupDesc;
@@ -57,13 +58,14 @@ import com.mobiperf_library.util.Logger;
 
 /**
  * @author jackjia,Hongyi Yao (hyyao@umich.edu)
- * The user API for Mobiperf library
+ * The user API for Mobiperf library. Use singleton design pattern to ensure
+ * that there only exist one instance of API
  * User: add task => Scheduler: run task, send finish event
  * => User: implement OnResultReturn to get result
  * thread safe
  * The client and server change TaskID as a Long type.
  */
-public abstract class API {
+public final class API {
   public final static int DNSLookup = 1;
   public final static int HTTP = 2;
   public final static int Ping = 3;
@@ -81,24 +83,26 @@ public abstract class API {
   Messenger mSchedulerMessenger = null;
   
   private String clientKey;
-    
-  public API(Context parent, String clientKey) {
+  
+  private static API apiObject;
+  
+  private API(Context parent, String clientKey) {
     this.parent = parent;
     this.clientKey = clientKey;
     bind();
   }
 
+  public static API getAPI(Context parent, String clientKey) {
+    if ( apiObject == null ) {
+      apiObject = new API(parent, clientKey);
+    }
+    return apiObject;
+  }
   
-  /**
-   * The user must implement this interface to define how to process the 
-   * measurement result
-   * @param result
-   */
-  public abstract void handleResults(String taskId,
-      MeasurementResult[] results);
-  
-  public abstract void handleServerTaskResults(String taskId,
-      MeasurementResult[] results);
+  @Override
+  public Object clone() throws CloneNotSupportedException {
+    throw new CloneNotSupportedException();
+  }
   
   /**
    * Handler of incoming messages from service.
@@ -123,12 +127,19 @@ public abstract class API {
 
             taskId = data.getString("taskId");
             priority = data.getInt("priority");
+            
+            Intent intent = new Intent();
             if ( priority == MeasurementTask.USER_PRIORITY ) {
-              handleResults(taskId, results);
+              intent.setAction(UpdateIntent.USER_RESULT_ACTION);
+//              handleResults(taskId, results);
             }
             else {
-              handleServerTaskResults(taskId, results);
+              intent.setAction(UpdateIntent.SERVER_RESULT_ACTION);
+//              handleServerTaskResults(taskId, results);
             }
+            intent.putExtra(UpdateIntent.TASKID_PAYLOAD, taskId);
+            intent.putExtra(UpdateIntent.RESULT_PAYLOAD, parcels);
+            parent.sendBroadcast(intent);
           }
           break;
         default:
