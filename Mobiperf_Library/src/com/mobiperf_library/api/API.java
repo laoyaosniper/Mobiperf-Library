@@ -18,23 +18,20 @@ import java.security.InvalidParameterException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Map;
+import java.util.Set;
 
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
-import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
 import android.os.Messenger;
-import android.os.Parcelable;
 import android.os.RemoteException;
 
 
 import android.os.Bundle;
 import com.mobiperf_library.Config;
-import com.mobiperf_library.MeasurementResult;
-import com.mobiperf_library.MeasurementScheduler;
 import com.mobiperf_library.MeasurementTask;
 import com.mobiperf_library.UpdateIntent;
 import com.mobiperf_library.exceptions.MeasurementError;
@@ -78,6 +75,16 @@ public final class API {
 
   public String userResultAction;
   public String serverResultAction;
+
+  public final static String PING_TYPE = PingTask.TYPE;
+  public final static String HTTP_TYPE = HttpTask.TYPE;
+  public final static String DNSLOOKUP_TYPE = DnsLookupTask.TYPE;
+  public final static String TRACEROUTE_TYPE = TracerouteTask.TYPE;
+  public final static String TCPTHROUGHPUT_TYPE = TCPThroughputTask.TYPE;
+  public final static String UDPBURST_TYPE = UDPBurstTask.TYPE;
+  
+  public final static int USER_PRIORITY = MeasurementTask.USER_PRIORITY;
+  public final static int INVALID_PRIORITY = MeasurementTask.INVALID_PRIORITY;
   
   private Context parent;
   
@@ -92,15 +99,22 @@ public final class API {
   private API(Context parent, String clientKey) {
     this.parent = parent;
     this.clientKey = clientKey;
+
     this.userResultAction = UpdateIntent.USER_RESULT_ACTION + "." + clientKey;
     this.serverResultAction = UpdateIntent.SERVER_RESULT_ACTION;
+    Logger.e("API-> API()");
     bind();
   }
 
   public static API getAPI(Context parent, String clientKey) {
+    Logger.e("API-> getAPI()");
     if ( apiObject == null ) {
+      Logger.e("API-> getAPI() 2"); 
       apiObject = new API(parent, clientKey);
+    }else{
+      apiObject.bind();
     }
+    
     return apiObject;
   }
   
@@ -116,21 +130,11 @@ public final class API {
     @Override
     public void onServiceConnected(ComponentName className, IBinder service) {
       Logger.d("onServiceConnected called.....");
+      Logger.e("API -> onServiceConnected called");
       // We've bound to a Messenger and get Messenger instance
       mSchedulerMessenger = new Messenger(service);
       isBound = true;
       isBindingToService = false;
-//      // Hongyi: register client messenger
-//      Message msg = Message.obtain(null, Config.MSG_REGISTER_CLIENT);
-//      Bundle data = new Bundle();
-//      data.putString("clientKey", clientKey);
-//      msg.setData(data);
-//      try {
-//        mSchedulerMessenger.send(msg);
-//      } catch (RemoteException e) {
-//        // Service crushed, we can count on soon being disconnected
-//        // so we don't need to do anything
-//      }
     }
     
       @Override
@@ -142,44 +146,39 @@ public final class API {
   };
 
   public Messenger getScheduler() {
-      if (isBound) {
-          return mSchedulerMessenger;
-      } else {
-          bind();
-          // TODO(Hongyi): currently always return null
-          if ( isBound ) {
-            return mSchedulerMessenger;
-          }
-          else {
-            return null;
-          }
+    if (isBound) {
+      Logger.e("API-> getScheduler 1");
+      return mSchedulerMessenger;
+    } else {
+      Logger.e("API-> getScheduler 2");
+
+      // TODO(Hongyi): currently always return null
+      if ( isBound ) {
+        return mSchedulerMessenger;
       }
+      else {
+
+        return null;
+      }
+    }
   }
   
   public void bind() {
-    Logger.d("MainActivity-> bindToService called");
+    Logger.e("API-> bind() called "+isBindingToService+" "+isBound);
     if (!isBindingToService && !isBound) {
-        // Bind to the scheduler service if it is not bounded
-        Intent intent = new Intent("com.mobiperf_library.MeasurementScheduler");
-        parent.bindService(intent, serviceConn, Context.BIND_AUTO_CREATE);
-        isBindingToService = true;
+      Logger.e("API-> bind() called 2");
+      // Bind to the scheduler service if it is not bounded
+      Intent intent = new Intent("com.mobiperf_library.MeasurementScheduler");
+      parent.getApplicationContext().bindService(intent, serviceConn, Context.BIND_AUTO_CREATE);
+      isBindingToService = true;
     }
   }
   
   public void unbind() {
+    Logger.e("API-> unbind called");
     if (isBound) {
-//      // Hongyi: unregister client messenger in the service
-//      Message msg = Message.obtain(null, Config.MSG_UNREGISTER_CLIENT);
-//      Bundle data = new Bundle();
-//      data.putString("clientKey", clientKey);
-//      msg.setData(data);
-//      try {
-//        mSchedulerMessenger.send(msg);
-//      } catch (RemoteException e) {
-//        // Service crushed, we can count on soon being disconnected
-//        // so we don't need to do anything
-//      }
-      parent.unbindService(serviceConn);
+      Logger.e("API-> unbind called 2");
+      parent.getApplicationContext().unbindService(serviceConn);
       isBound = false;
     }
   }
@@ -298,4 +297,14 @@ public final class API {
     }
   }
 
+  /** Gets the currently available measurement descriptions*/
+  public static Set<String> getMeasurementNames() {
+    return MeasurementTask.getMeasurementNames();
+  }
+  
+  /** Get the type of a measurement based on its name. Type is for JSON interface only
+   * where as measurement name is a readable string for the UI */
+  public static String getTypeForMeasurementName(String name) {
+    return MeasurementTask.getTypeForMeasurementName(name);
+  }
 }
