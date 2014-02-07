@@ -14,8 +14,12 @@ import com.mobiperf_library.exceptions.MeasurementError;
 import com.mobiperf_library.util.Logger;
 
 import android.os.Bundle;
+import android.os.Parcelable;
 import android.app.Activity;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.view.Menu;
 import android.view.View;
 import android.widget.ArrayAdapter;
@@ -28,6 +32,7 @@ public class MainActivity extends Activity {
   private ArrayAdapter<String> resultList;
 
   private API libraryAPI;
+  private BroadcastReceiver broadcastReceiver;
   private int counter = 0;
   @Override
   protected void onCreate(Bundle savedInstanceState) {
@@ -37,48 +42,94 @@ public class MainActivity extends Activity {
     setContentView(R.layout.activity_main);
     startService(new Intent(this, MeasurementScheduler.class));
 
-    this.libraryAPI = new API(this, "mykey1") {
+    this.libraryAPI = API.getAPI(this, "mykey1");
+    
+    IntentFilter filter = new IntentFilter();
+    filter.addAction(UpdateIntent.USER_RESULT_ACTION);
+    filter.addAction(UpdateIntent.SERVER_RESULT_ACTION);
+    broadcastReceiver = new BroadcastReceiver() {
       private int counter_temp = 0;
       @Override
-      public void handleResults(String taskId, MeasurementResult[] results) {
-        if ( results != null ) {
-          for ( MeasurementResult r : results ) {
-            resultList.insert(r.toString(), 0);
-            counter_temp++;
+      public void onReceive(Context context, Intent intent) {
+        Parcelable[] parcels =
+            intent.getParcelableArrayExtra(UpdateIntent.RESULT_PAYLOAD);
+        MeasurementResult[] results = null;
+        if ( parcels != null ) {
+          results = new MeasurementResult[parcels.length];
+          for ( int i = 0; i < results.length; i++ ) {
+            results[i] = (MeasurementResult) parcels[i];
           }
         }
-        else {
-          resultList.insert("Task failed!", 0);
-          counter_temp++;
-        }
-
-        resultList.add("Get user result, counter: " + counter_temp);
-        runOnUiThread(new Runnable() {
-          public void run() { resultList.notifyDataSetChanged(); }
-        });
-
-      }
-      @Override
-      public void handleServerTaskResults(String taskId, MeasurementResult[] results) {
-        if ( results != null ) {
-          for ( MeasurementResult r : results ) {
-            resultList.insert(r.toString(), 0);
-            counter_temp++;
-          }
-        }
-        else {
-          resultList.insert("Task failed!", 0);
-          counter_temp++;
-        }
-
-        resultList.add("Get server result, counter: " + counter_temp);
-        runOnUiThread(new Runnable() {
-          public void run() { resultList.notifyDataSetChanged(); }
-        });
         
-      }
+        if ( results != null ) {
+          for ( MeasurementResult r : results ) {
+            resultList.insert(r.toString(), 0);
+            counter_temp++;
+          }
+        }
+        else {
+          resultList.insert("Task failed!", 0);
+          counter_temp++;
+        }
 
+        if ( intent.getAction().equals(UpdateIntent.USER_RESULT_ACTION)) {
+          resultList.add("Get user result, counter: " + counter_temp);
+        }
+        else if ( intent.getAction().equals(UpdateIntent.SERVER_RESULT_ACTION)) {
+          resultList.add("Get server result, counter: " + counter_temp);
+        }
+        runOnUiThread(new Runnable() {
+          public void run() { resultList.notifyDataSetChanged(); }
+        });
+
+      }
+      
     };
+    
+    this.registerReceiver(broadcastReceiver, filter);
+//    this.libraryAPI = new API(this, "mykey1") 
+//    {
+//      private int counter_temp = 0;
+//      @Override
+//      public void handleResults(String taskId, MeasurementResult[] results) {
+//        if ( results != null ) {
+//          for ( MeasurementResult r : results ) {
+//            resultList.insert(r.toString(), 0);
+//            counter_temp++;
+//          }
+//        }
+//        else {
+//          resultList.insert("Task failed!", 0);
+//          counter_temp++;
+//        }
+//
+//        resultList.add("Get user result, counter: " + counter_temp);
+//        runOnUiThread(new Runnable() {
+//          public void run() { resultList.notifyDataSetChanged(); }
+//        });
+//
+//      }
+//      @Override
+//      public void handleServerTaskResults(String taskId, MeasurementResult[] results) {
+//        if ( results != null ) {
+//          for ( MeasurementResult r : results ) {
+//            resultList.insert(r.toString(), 0);
+//            counter_temp++;
+//          }
+//        }
+//        else {
+//          resultList.insert("Task failed!", 0);
+//          counter_temp++;
+//        }
+//
+//        resultList.add("Get server result, counter: " + counter_temp);
+//        runOnUiThread(new Runnable() {
+//          public void run() { resultList.notifyDataSetChanged(); }
+//        });
+//        
+//      }
+//
+//    };
 
     this.consoleView = (ListView) this.findViewById(R.id.resultConsole);
     this.resultList = new ArrayAdapter<String>(getApplicationContext(), R.layout.list_item);
