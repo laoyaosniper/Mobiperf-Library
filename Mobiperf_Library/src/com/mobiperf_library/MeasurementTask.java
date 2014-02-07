@@ -189,10 +189,6 @@ public abstract class MeasurementTask
     return taskstrbld.toString().hashCode();
   }
 
-  /**
-   * Hongyi: change this method to return void. Now it only generate the taskId
-   * and the scheduler uses getTaskId() to get it
-   */
   public void generateTaskID() {
     taskId = this.hashCode()+"";
   }

@@ -18,6 +18,7 @@ import java.security.InvalidParameterException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Map;
+import java.util.Set;
 
 import android.content.ComponentName;
 import android.content.Context;
@@ -36,6 +37,7 @@ import com.mobiperf_library.Config;
 import com.mobiperf_library.MeasurementResult;
 import com.mobiperf_library.MeasurementScheduler;
 import com.mobiperf_library.MeasurementTask;
+import com.mobiperf_library.UpdateIntent;
 import com.mobiperf_library.exceptions.MeasurementError;
 import com.mobiperf_library.measurements.DnsLookupTask;
 import com.mobiperf_library.measurements.DnsLookupTask.DnsLookupDesc;
@@ -57,13 +59,14 @@ import com.mobiperf_library.util.Logger;
 
 /**
  * @author jackjia,Hongyi Yao (hyyao@umich.edu)
- * The user API for Mobiperf library
+ * The user API for Mobiperf library. Use singleton design pattern to ensure
+ * that there only exist one instance of API
  * User: add task => Scheduler: run task, send finish event
  * => User: implement OnResultReturn to get result
  * thread safe
  * The client and server change TaskID as a Long type.
  */
-public abstract class API {
+public final class API {
   public final static int DNSLookup = 1;
   public final static int HTTP = 2;
   public final static int Ping = 3;
@@ -74,6 +77,16 @@ public abstract class API {
   public final static int Parallel = 101;
   public final static int Sequential = 102;
 
+  public final static String PING_TYPE = PingTask.TYPE;
+  public final static String HTTP_TYPE = HttpTask.TYPE;
+  public final static String DNSLOOKUP_TYPE = DnsLookupTask.TYPE;
+  public final static String TRACEROUTE_TYPE = TracerouteTask.TYPE;
+  public final static String TCPTHROUGHPUT_TYPE = TCPThroughputTask.TYPE;
+  public final static String UDPBURST_TYPE = UDPBurstTask.TYPE;
+  
+  public final static int USER_PRIORITY = MeasurementTask.USER_PRIORITY;
+  public final static int INVALID_PRIORITY = MeasurementTask.INVALID_PRIORITY;
+  
   private Context parent;
   
   private boolean isBound = false;
@@ -81,24 +94,32 @@ public abstract class API {
   Messenger mSchedulerMessenger = null;
   
   private String clientKey;
-    
-  public API(Context parent, String clientKey) {
+  
+  private static API apiObject;
+  
+  private API(Context parent, String clientKey) {
     this.parent = parent;
     this.clientKey = clientKey;
+    Logger.e("API-> API()");
     bind();
   }
 
+  public static API getAPI(Context parent, String clientKey) {
+	Logger.e("API-> getAPI()");
+    if ( apiObject == null ) {
+      Logger.e("API-> getAPI() 2");	
+      apiObject = new API(parent, clientKey);
+    }else{
+    	apiObject.bind();
+    }
+    
+    return apiObject;
+  }
   
-  /**
-   * The user must implement this interface to define how to process the 
-   * measurement result
-   * @param result
-   */
-  public abstract void handleResults(String taskId,
-      MeasurementResult[] results);
-  
-  public abstract void handleServerTaskResults(String taskId,
-      MeasurementResult[] results);
+  @Override
+  public Object clone() throws CloneNotSupportedException {
+    throw new CloneNotSupportedException();
+  }
   
   /**
    * Handler of incoming messages from service.
@@ -123,12 +144,19 @@ public abstract class API {
 
             taskId = data.getString("taskId");
             priority = data.getInt("priority");
+            
+            Intent intent = new Intent();
             if ( priority == MeasurementTask.USER_PRIORITY ) {
-              handleResults(taskId, results);
+              intent.setAction(UpdateIntent.USER_RESULT_ACTION);
+//              handleResults(taskId, results);
             }
             else {
-              handleServerTaskResults(taskId, results);
+              intent.setAction(UpdateIntent.SERVER_RESULT_ACTION);
+//              handleServerTaskResults(taskId, results);
             }
+            intent.putExtra(UpdateIntent.TASKID_PAYLOAD, taskId);
+            intent.putExtra(UpdateIntent.RESULT_PAYLOAD, parcels);
+            parent.sendBroadcast(intent);
           }
           break;
         default:
@@ -149,6 +177,7 @@ public abstract class API {
     @Override
     public void onServiceConnected(ComponentName className, IBinder service) {
       Logger.d("onServiceConnected called.....");
+      Logger.e("API -> onServiceConnected called");
       // We've bound to a Messenger and get Messenger instance
       mSchedulerMessenger = new Messenger(service);
       isBound = true;
@@ -177,31 +206,42 @@ public abstract class API {
 
   public Messenger getScheduler() {
       if (isBound) {
+    	  Logger.e("API-> getScheduler 1");
           return mSchedulerMessenger;
       } else {
-          bind();
+    	  Logger.e("API-> getScheduler 2");
+          
           // TODO(Hongyi): currently always return null
           if ( isBound ) {
             return mSchedulerMessenger;
           }
           else {
+        	  
             return null;
           }
       }
   }
   
   public void bind() {
-    Logger.d("MainActivity-> bindToService called");
+    Logger.e("API-> bind() called "+isBindingToService+" "+isBound);
     if (!isBindingToService && !isBound) {
+    	Logger.e("API-> bind() called 2");
         // Bind to the scheduler service if it is not bounded
         Intent intent = new Intent("com.mobiperf_library.MeasurementScheduler");
-        parent.bindService(intent, serviceConn, Context.BIND_AUTO_CREATE);
+//        parent.startService(intent);
+        parent.getApplicationContext().bindService(intent, serviceConn, Context.BIND_AUTO_CREATE);
+//        parent.bindService(intent, serviceConn, Context.BIND_AUTO_CREATE);
+//        if(!(parent.bindService(intent, serviceConn, Context.BIND_AUTO_CREATE))){
+//        	parent.startService(intent);
+//        }
         isBindingToService = true;
     }
   }
   
   public void unbind() {
+	Logger.e("API-> unbind called");
     if (isBound) {
+    	Logger.e("API-> unbind called 2");
       // Hongyi: unregister client messenger in the service
       Message msg = Message.obtain(null, Config.MSG_UNREGISTER_CLIENT);
       Bundle data = new Bundle();
@@ -213,7 +253,7 @@ public abstract class API {
         // Service crushed, we can count on soon being disconnected
         // so we don't need to do anything
       }
-      parent.unbindService(serviceConn);
+      parent.getApplicationContext().unbindService(serviceConn);
       isBound = false;
     }
   }
@@ -329,4 +369,14 @@ public abstract class API {
     }
   }
 
+  /** Gets the currently available measurement descriptions*/
+  public static Set<String> getMeasurementNames() {
+    return MeasurementTask.getMeasurementNames();
+  }
+  
+  /** Get the type of a measurement based on its name. Type is for JSON interface only
+   * where as measurement name is a readable string for the UI */
+  public static String getTypeForMeasurementName(String name) {
+    return MeasurementTask.getTypeForMeasurementName(name);
+  }
 }

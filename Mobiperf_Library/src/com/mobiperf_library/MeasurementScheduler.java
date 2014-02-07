@@ -63,7 +63,7 @@ public class MeasurementScheduler extends Service{
 
   private ExecutorService measurementExecutor;
   private BroadcastReceiver broadcastReceiver;
-  private boolean pauseRequested = true;
+  private boolean pauseRequested = false;
   private boolean stopRequested = false;
   public boolean isSchedulerStarted =  false;
 
@@ -128,9 +128,13 @@ public class MeasurementScheduler extends Service{
     this.checkinRetryCnt = 0;
     this.checkinTask = new CheckinTask();
 
-    this.pauseRequested = true;
+    this.pauseRequested = false;
     this.stopRequested = false;
     phoneUtils = PhoneUtils.getPhoneUtils();
+    
+    //TODO When services bind to Scheduler, they may not call
+    //onStartCommand, so I enabled the check-in here
+    setCheckinInterval(Config.MIN_CHECKIN_INTERVAL_SEC);
 
     // Register activity specific BroadcastReceiver here    
     IntentFilter filter = new IntentFilter();
@@ -711,7 +715,7 @@ public class MeasurementScheduler extends Service{
         // Also reset checkin if we get a success
         resetCheckin();
         // Schedule the new tasks
-        if(getCurrentTask()==null){
+        if(getCurrentTask()==null){//TODO check this
           alarmManager.cancel(measurementIntentSender);
           handleMeasurement();
         }
