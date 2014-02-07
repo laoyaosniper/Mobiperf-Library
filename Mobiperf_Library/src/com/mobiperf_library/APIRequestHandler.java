@@ -41,33 +41,32 @@ public class APIRequestHandler extends Handler {
     MeasurementTask task;
     String taskId = null;
     switch (msg.what) {
-      case Config.MSG_REGISTER_CLIENT:
-        if ( clientKey != null ) {
-          scheduler.getClientsMap().put(clientKey, msg.replyTo);
-          Logger.d("Get register client message! key = " + clientKey);
-        }
-        else {
-          Logger.e("No client key found when registering!");
-        }
-        break;
-      case Config.MSG_UNREGISTER_CLIENT:
-        if ( clientKey != null ) {
-          scheduler.getClientsMap().remove(clientKey);
-          Logger.d("Unregister client key = " + clientKey);
-        }
-        else {
-          Logger.e("No client key found when unregistering!");
-        }
-        break;
+//      case Config.MSG_REGISTER_CLIENT:
+//        if ( clientKey != null ) {
+//          scheduler.getClientsMap().put(clientKey, msg.replyTo);
+//          Logger.d("Get register client message! key = " + clientKey);
+//        }
+//        else {
+//          Logger.e("No client key found when registering!");
+//        }
+//        break;
+//      case Config.MSG_UNREGISTER_CLIENT:
+//        if ( clientKey != null ) {
+//          scheduler.getClientsMap().remove(clientKey);
+//          Logger.d("Unregister client key = " + clientKey);
+//        }
+//        else {
+//          Logger.e("No client key found when unregistering!");
+//        }
+//        break;
       case Config.MSG_SUBMIT_TASK:
         task = null;
         task = (MeasurementTask) data.getParcelable("measurementTask");
         if ( task != null ) {
-          Logger.d("Hongyi: Add new task! taskId " + task.getTaskId());
+          // TODO(Hongyi): for delay measurement
+          task.getDescription().parameters.put("ts_scheduler_recv", String.valueOf(System.currentTimeMillis()));
           
-//          // Hongyi: for test
-//          task.measurementDesc.parameters.put("secondTimestamp"
-//            , String.valueOf(System.currentTimeMillis()));
+          Logger.d("Hongyi: Add new task! taskId " + task.getTaskId());
           
           taskId = scheduler.submitTask(task);
         }

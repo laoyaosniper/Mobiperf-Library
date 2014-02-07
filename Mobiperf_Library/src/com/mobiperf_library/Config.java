@@ -25,8 +25,8 @@ public interface Config {
 
 
   /** Constants for message **/
-  public static final int MSG_REGISTER_CLIENT = 1;
-  public static final int MSG_UNREGISTER_CLIENT = 2;
+//  public static final int MSG_REGISTER_CLIENT = 1;
+//  public static final int MSG_UNREGISTER_CLIENT = 2;
   public static final int MSG_SUBMIT_TASK = 3;
   public static final int MSG_SEND_RESULT = 4;
   public static final int MSG_CANCEL_TASK = 5;

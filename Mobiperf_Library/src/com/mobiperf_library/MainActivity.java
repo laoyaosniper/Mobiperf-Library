@@ -6,8 +6,11 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.mobiperf_library.MeasurementResult;
+import com.mobiperf_library.MeasurementScheduler;
 import com.mobiperf_library.MeasurementTask;
 import com.mobiperf_library.R;
+import com.mobiperf_library.UpdateIntent;
 
 import com.mobiperf_library.api.API;
 import com.mobiperf_library.exceptions.MeasurementError;
@@ -34,6 +37,7 @@ public class MainActivity extends Activity {
   private API libraryAPI;
   private BroadcastReceiver broadcastReceiver;
   private int counter = 0;
+  private String clientKey;
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
@@ -42,15 +46,19 @@ public class MainActivity extends Activity {
     setContentView(R.layout.activity_main);
     startService(new Intent(this, MeasurementScheduler.class));
 
-    this.libraryAPI = API.getAPI(this, "mykey1");
+    this.clientKey = "myKey0";
+    this.libraryAPI = API.getAPI(this, clientKey);
     
     IntentFilter filter = new IntentFilter();
-    filter.addAction(UpdateIntent.USER_RESULT_ACTION);
-    filter.addAction(UpdateIntent.SERVER_RESULT_ACTION);
+    filter.addAction(libraryAPI.userResultAction);
+    filter.addAction(libraryAPI.serverResultAction);
     broadcastReceiver = new BroadcastReceiver() {
       private int counter_temp = 0;
       @Override
       public void onReceive(Context context, Intent intent) {
+        long ts_api_recv = System.currentTimeMillis();
+        long ts_scheduler_send = intent.getLongExtra("ts_scheduler_send", 0l);
+        Logger.e("New Library: Received intent");
         Parcelable[] parcels =
             intent.getParcelableArrayExtra(UpdateIntent.RESULT_PAYLOAD);
         MeasurementResult[] results = null;
@@ -65,6 +73,14 @@ public class MainActivity extends Activity {
           for ( MeasurementResult r : results ) {
             resultList.insert(r.toString(), 0);
             counter_temp++;
+            long api2scheduler = 
+                Long.parseLong(r.getParameter("ts_scheduler_recv")) -
+                Long.parseLong(r.getParameter("ts_api_send"));
+            long scheduler2api = 
+                ts_api_recv - ts_scheduler_send;
+            long end2end = ts_api_recv - Long.parseLong(r.getParameter("ts_api_send"));
+            Logger.e("MARKER 0 " + api2scheduler
+              + " " + scheduler2api + " " + end2end);
           }
         }
         else {
@@ -72,10 +88,10 @@ public class MainActivity extends Activity {
           counter_temp++;
         }
 
-        if ( intent.getAction().equals(UpdateIntent.USER_RESULT_ACTION)) {
+        if ( intent.getAction().equals(libraryAPI.userResultAction)) {
           resultList.add("Get user result, counter: " + counter_temp);
         }
-        else if ( intent.getAction().equals(UpdateIntent.SERVER_RESULT_ACTION)) {
+        else if ( intent.getAction().equals(libraryAPI.serverResultAction)) {
           resultList.add("Get server result, counter: " + counter_temp);
         }
         runOnUiThread(new Runnable() {
@@ -152,33 +168,46 @@ public class MainActivity extends Activity {
         ArrayList<MeasurementTask> taskList = new ArrayList<MeasurementTask>();
         switch (counter % 5) {   
           case 0:
-            taskType = API.UDPBurst;
-            params.put("packet_burst", "16");
-            //params.put("packet_burst", String.valueOf(50));
-            //params.put("direction", "Up");
-            //params.put("target","www.google.com");
+            taskType = API.DNSLookup;
+            params.put("target","www.google.com");
             //endTime = new Date(System.currentTimeMillis() + 5000L);
-            priority = MeasurementTask.INVALID_PRIORITY;
-
             task = libraryAPI.createTask(taskType
               , Calendar.getInstance().getTime(), endTime, 120, 1
-              , priority, contextIntervalSec, params);
+              , priority, 1, params);
+            
+//            taskType = API.UDPBurst;
+//            params.put("packet_burst", "16");
+//            //params.put("packet_burst", String.valueOf(50));
+//            //params.put("direction", "Up");
+//            //params.put("target","www.google.com");
+//            //endTime = new Date(System.currentTimeMillis() + 5000L);
+//            priority = MeasurementTask.INVALID_PRIORITY;
+//
+//            task = libraryAPI.createTask(taskType
+//              , Calendar.getInstance().getTime(), endTime, 120, 1
+//              , priority, contextIntervalSec, params);
             break;
           case 1:
+            taskType = API.HTTP;
+            params.put("url","www.google.com");
+            //endTime = new Date(System.currentTimeMillis() + 5000L);
+            task = libraryAPI.createTask(taskType
+              , Calendar.getInstance().getTime(), endTime, 120, 1
+              , priority, 1, params);
 //            try {
 //              libraryAPI.cancelTask(prevTask.getTaskId());
 //            } catch (Exception e) {
 //              // TODO Auto-generated catch block
 //              e.printStackTrace();
 //            }
-            taskType = API.UDPBurst;
-            params.put("direction", "Up");
-            params.put("packet_burst", "16");
-            //params.put("target","www.google.com");
-            //endTime = new Date(System.currentTimeMillis() + 5000L);
-            task = libraryAPI.createTask(taskType
-              , Calendar.getInstance().getTime(), endTime, 120, 1
-              , priority, contextIntervalSec, params);
+//            taskType = API.UDPBurst;
+//            params.put("direction", "Up");
+//            params.put("packet_burst", "16");
+//            //params.put("target","www.google.com");
+//            //endTime = new Date(System.currentTimeMillis() + 5000L);
+//            task = libraryAPI.createTask(taskType
+//              , Calendar.getInstance().getTime(), endTime, 120, 1
+//              , priority, contextIntervalSec, params);
             break;
           case 2:
             taskType = API.HTTP;
@@ -276,6 +305,7 @@ public class MainActivity extends Activity {
   @Override
   protected void onDestroy() {
     Logger.d("MainActivity -> onDestroy called");
+    this.unregisterReceiver(broadcastReceiver);
     super.onDestroy();
   }
 }

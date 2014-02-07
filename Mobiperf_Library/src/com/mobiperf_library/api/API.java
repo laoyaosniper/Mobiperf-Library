@@ -76,6 +76,9 @@ public final class API {
   public final static int Parallel = 101;
   public final static int Sequential = 102;
 
+  public String userResultAction;
+  public String serverResultAction;
+  
   private Context parent;
   
   private boolean isBound = false;
@@ -89,6 +92,8 @@ public final class API {
   private API(Context parent, String clientKey) {
     this.parent = parent;
     this.clientKey = clientKey;
+    this.userResultAction = UpdateIntent.USER_RESULT_ACTION + "." + clientKey;
+    this.serverResultAction = UpdateIntent.SERVER_RESULT_ACTION;
     bind();
   }
 
@@ -104,55 +109,6 @@ public final class API {
     throw new CloneNotSupportedException();
   }
   
-  /**
-   * Handler of incoming messages from service.
-   */
-  class IncomingHandler extends Handler {
-    @Override
-    public void handleMessage(Message msg) {
-      Bundle data = msg.getData();
-      data.setClassLoader(MeasurementScheduler.class.getClassLoader());
-      
-      String taskId;
-      int priority;
-      MeasurementResult[] results;
-      switch (msg.what) {
-        case Config.MSG_SEND_RESULT:
-          Parcelable[] parcels = data.getParcelableArray("results");
-          if ( parcels != null ) {
-            results = new MeasurementResult[parcels.length];
-            for ( int i = 0; i < results.length; i++ ) {
-              results[i] = (MeasurementResult) parcels[i];
-            }
-
-            taskId = data.getString("taskId");
-            priority = data.getInt("priority");
-            
-            Intent intent = new Intent();
-            if ( priority == MeasurementTask.USER_PRIORITY ) {
-              intent.setAction(UpdateIntent.USER_RESULT_ACTION);
-//              handleResults(taskId, results);
-            }
-            else {
-              intent.setAction(UpdateIntent.SERVER_RESULT_ACTION);
-//              handleServerTaskResults(taskId, results);
-            }
-            intent.putExtra(UpdateIntent.TASKID_PAYLOAD, taskId);
-            intent.putExtra(UpdateIntent.RESULT_PAYLOAD, parcels);
-            parent.sendBroadcast(intent);
-          }
-          break;
-        default:
-          super.handleMessage(msg);
-      }
-    }
-  }
-  
-  /**
-   * Target we publish for clients to send messages to IncomingHandler.
-   */
-  final Messenger mClientMessenger = new Messenger(new IncomingHandler());
-  
   
   /** Defines callbacks for service binding, passed to bindService() */
   private ServiceConnection serviceConn = new ServiceConnection() {
@@ -164,18 +120,17 @@ public final class API {
       mSchedulerMessenger = new Messenger(service);
       isBound = true;
       isBindingToService = false;
-      // Hongyi: register client messenger
-      Message msg = Message.obtain(null, Config.MSG_REGISTER_CLIENT);
-      Bundle data = new Bundle();
-      data.putString("clientKey", clientKey);
-      msg.setData(data);
-      msg.replyTo = mClientMessenger;
-      try {
-        mSchedulerMessenger.send(msg);
-      } catch (RemoteException e) {
-        // Service crushed, we can count on soon being disconnected
-        // so we don't need to do anything
-      }
+//      // Hongyi: register client messenger
+//      Message msg = Message.obtain(null, Config.MSG_REGISTER_CLIENT);
+//      Bundle data = new Bundle();
+//      data.putString("clientKey", clientKey);
+//      msg.setData(data);
+//      try {
+//        mSchedulerMessenger.send(msg);
+//      } catch (RemoteException e) {
+//        // Service crushed, we can count on soon being disconnected
+//        // so we don't need to do anything
+//      }
     }
     
       @Override
@@ -213,17 +168,17 @@ public final class API {
   
   public void unbind() {
     if (isBound) {
-      // Hongyi: unregister client messenger in the service
-      Message msg = Message.obtain(null, Config.MSG_UNREGISTER_CLIENT);
-      Bundle data = new Bundle();
-      data.putString("clientKey", clientKey);
-      msg.setData(data);
-      try {
-        mSchedulerMessenger.send(msg);
-      } catch (RemoteException e) {
-        // Service crushed, we can count on soon being disconnected
-        // so we don't need to do anything
-      }
+//      // Hongyi: unregister client messenger in the service
+//      Message msg = Message.obtain(null, Config.MSG_UNREGISTER_CLIENT);
+//      Bundle data = new Bundle();
+//      data.putString("clientKey", clientKey);
+//      msg.setData(data);
+//      try {
+//        mSchedulerMessenger.send(msg);
+//      } catch (RemoteException e) {
+//        // Service crushed, we can count on soon being disconnected
+//        // so we don't need to do anything
+//      }
       parent.unbindService(serviceConn);
       isBound = false;
     }
@@ -288,6 +243,9 @@ public final class API {
       throws MeasurementError {
     Messenger messenger = getScheduler();
     if ( messenger != null ) {
+      // TODO(Hongyi): for delay measurement
+      task.getDescription().parameters.put("ts_api_send", String.valueOf(System.currentTimeMillis()));
+      
       Logger.d("Adding new task");
       Message msg = Message.obtain(null, Config.MSG_SUBMIT_TASK);
       Bundle data = new Bundle();

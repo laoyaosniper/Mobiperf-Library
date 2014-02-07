@@ -93,7 +93,7 @@ public class MeasurementScheduler extends Service{
 
   private volatile ConcurrentHashMap<String, String> idToClientKey;
 
-  private HashMap<String, Messenger> mClients;
+//  private HashMap<String, Messenger> mClients;
   private Messenger messenger;
   
   @Override
@@ -117,7 +117,7 @@ public class MeasurementScheduler extends Service{
 
     this.idToClientKey= new ConcurrentHashMap<String, String>();
 
-    this.mClients = new HashMap<String, Messenger>();
+//    this.mClients = new HashMap<String, Messenger>();
     messenger = new Messenger(new APIRequestHandler(this));
     
     this.setCurrentTask(null);
@@ -263,9 +263,9 @@ public class MeasurementScheduler extends Service{
     return starttime;
   }
 
-  public HashMap<String, Messenger> getClientsMap() {
-    return mClients;
-  }
+//  public HashMap<String, Messenger> getClientsMap() {
+//    return mClients;
+//  }
   
   private synchronized void handleMeasurement() {
     try{
@@ -550,26 +550,14 @@ public class MeasurementScheduler extends Service{
    */
   public void sendUserResultMessage (Parcelable[] results, String clientKey,
                                      String taskId, int priority) {
-    // Hongyi: return the result to client by message
-    Messenger messenger = mClients.get(clientKey);
-    if (messenger != null) {
-      Message msg = Message.obtain(null, Config.MSG_SEND_RESULT);
-      Bundle data = new Bundle();     
-      data.putParcelableArray("results", results);   
-      data.putString("taskId", taskId);    
-      data.putInt("priority", priority);
-      Logger.d("Sending result back to client: taskId: " + taskId);
-      msg.setData(data);
-      try {
-        messenger.send(msg);
-      } catch (RemoteException e) {
-        // The client is dead, just remove it
-        mClients.remove(clientKey);
-      }
-    }
-    else {
-      Logger.e("ClientKey " + clientKey + " doesn't match a messenger!");
-    }
+    Logger.d("Sending result to client " + clientKey + ": taskId " + taskId);
+    Intent intent = new Intent();
+    intent.setAction(UpdateIntent.USER_RESULT_ACTION + "." + clientKey);
+    intent.putExtra(UpdateIntent.RESULT_PAYLOAD, results);
+    intent.putExtra(UpdateIntent.TASKID_PAYLOAD, taskId);
+    // TODO(Hongyi): for delay measurement
+    intent.putExtra("ts_scheduler_send", System.currentTimeMillis());
+    this.sendBroadcast(intent);
   }  
 
   /**
@@ -581,28 +569,14 @@ public class MeasurementScheduler extends Service{
    */
   public void sendServerResultMessage ( Parcelable[] results,
                                         String taskId, int priority) {
-    if ( mClients != null ) {
-      for ( Map.Entry<String, Messenger> entry : mClients.entrySet() ) {
-        Messenger m = entry.getValue();
-        Message msg = Message.obtain(null, Config.MSG_SEND_RESULT);
-        Bundle data = new Bundle();     
-        data.putParcelableArray("results", results);   
-        data.putString("taskId", taskId);    
-        data.putInt("priority", priority);
-        Logger.d("Sending result back to client: " + entry.getKey() + 
-          ", taskId: " + taskId);
-        msg.setData(data);
-        try {
-          m.send(msg);
-        } catch (RemoteException e) {
-          // The client is dead, just remove it
-          mClients.remove(entry.getKey());
-        }
-      }
-    }
-    else {
-      Logger.e("No client registered!");
-    }
+    Logger.d("Broadcasting result: taskId " + taskId);
+    Intent intent = new Intent();
+    intent.setAction(UpdateIntent.SERVER_RESULT_ACTION);
+    intent.putExtra(UpdateIntent.RESULT_PAYLOAD, results);
+    intent.putExtra(UpdateIntent.TASKID_PAYLOAD, taskId);
+    // TODO(Hongyi): for delay measurement
+    intent.putExtra("ts_scheduler_send", System.currentTimeMillis());
+    this.sendBroadcast(intent);
   }
 
   @Override
@@ -689,6 +663,7 @@ public class MeasurementScheduler extends Service{
 
     for (MeasurementTask task : tasksFromServer) {
       Logger.i("added task: " + task.toString());
+      task.measurementDesc.key = "Mobiperf Library";
       this.mainQueue.add(task);
     }
   }

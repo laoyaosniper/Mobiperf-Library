@@ -177,6 +177,14 @@ public class MeasurementResult implements Parcelable {
     return this.success;
   }
   
+  public void setParameter(String key, String value) {
+    this.measurementDesc.parameters.put(key, value);
+  }
+  
+  public String getParameter(String key) {
+    return this.measurementDesc.parameters.get(key);
+  }
+  
   /* Add the measurement results of type String into the class */
   public void addResult(String resultType, Object resultVal) {
     this.values.put(resultType,

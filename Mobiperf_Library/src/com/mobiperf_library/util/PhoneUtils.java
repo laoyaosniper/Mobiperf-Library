@@ -809,8 +809,11 @@ public class PhoneUtils {
     
     NetworkInfo activeNetwork = connectivityManager.getActiveNetworkInfo();
     String networkType = PhoneUtils.getPhoneUtils().getNetwork();
-    String ipConnectivity = getIpConnectivity();
-    String dnResolvability = getDnResolvability();
+//    String ipConnectivity = getIpConnectivity();
+//    String dnResolvability = getDnResolvability();
+    // Hongyi: deal with MLab server failure
+    String ipConnectivity = "UNKNOWN";
+    String dnResolvability = "UNKNOWN";
     Logger.w("IP connectivity is " + ipConnectivity);
     Logger.w("DN resolvability is " + dnResolvability);
     if (activeNetwork != null) {

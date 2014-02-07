@@ -5,6 +5,8 @@ package com.mobiperf_library;
 import java.security.InvalidParameterException;
 
 import android.content.Intent;
+
+import android.os.Process;
 /**
  * A repackaged Intent class that includes MobiLib-specific information. 
  */
@@ -23,29 +25,22 @@ public class UpdateIntent extends Intent {
   // Different types of actions that this intent can represent:
   private static final String PACKAGE_PREFIX =
       UpdateIntent.class.getPackage().getName();
-//  public static final String MSG_ACTION =
-//      PACKAGE_PREFIX + ".MSG_ACTION";
-//  public static final String PREFERENCE_ACTION =
-//      PACKAGE_PREFIX + ".PREFERENCE_ACTION";
+  private static final String APP_PREFIX = 
+      UpdateIntent.class.getPackage().getName() + Process.myPid();
+  
   public static final String MEASUREMENT_ACTION =
-      PACKAGE_PREFIX + ".MEASUREMENT_ACTION";
+      APP_PREFIX + ".MEASUREMENT_ACTION";
   public static final String CHECKIN_ACTION =
-      PACKAGE_PREFIX + ".CHECKIN_ACTION";
+      APP_PREFIX + ".CHECKIN_ACTION";
   public static final String CHECKIN_RETRY_ACTION =
-      PACKAGE_PREFIX + ".CHECKIN_RETRY_ACTION";
+      APP_PREFIX + ".CHECKIN_RETRY_ACTION";
   public static final String MEASUREMENT_PROGRESS_UPDATE_ACTION =
-      PACKAGE_PREFIX + ".MEASUREMENT_PROGRESS_UPDATE_ACTION";
+      APP_PREFIX + ".MEASUREMENT_PROGRESS_UPDATE_ACTION";
   
   public static final String USER_RESULT_ACTION =
       PACKAGE_PREFIX + ".USER_RESULT_ACTION";  
   public static final String SERVER_RESULT_ACTION =
       PACKAGE_PREFIX + ".SERVER_RESULT_ACTION";
-//  public static final String SYSTEM_STATUS_UPDATE_ACTION =
-//      PACKAGE_PREFIX + ".SYSTEM_STATUS_UPDATE_ACTION";
-//  public static final String SCHEDULER_CONNECTED_ACTION =
-//      PACKAGE_PREFIX + ".SCHEDULER_CONNECTED_ACTION";
-//  public static final String SCHEDULE_UPDATE_ACTION =
-//      PACKAGE_PREFIX + ".SCHEDULE_UPDATE_ACTION";
 
   // TODO(Hongyi): make it formal
   public static final String APP_ACTION = PACKAGE_PREFIX + ".APP_ACTION";
