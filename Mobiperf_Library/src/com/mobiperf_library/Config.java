@@ -6,6 +6,14 @@ package com.mobiperf_library;
  */
 
 public interface Config {
+  
+  /**
+   * Strings in string.xml
+   */
+  public static final String serverUrl = "https://openmobiledata.appspot.com";
+  public static final String anonymousServerUrl = "https://openmobiledata.appspot.com/anonymous";
+  public static final String testServerUrl = "";
+  public static final String defaultUser = "Anonymous";
 
   public static final int MAX_TASK_QUEUE_SIZE = 100;
 
@@ -25,11 +33,9 @@ public interface Config {
 
 
   /** Constants for message **/
-//  public static final int MSG_REGISTER_CLIENT = 1;
-//  public static final int MSG_UNREGISTER_CLIENT = 2;
-  public static final int MSG_SUBMIT_TASK = 3;
-  public static final int MSG_SEND_RESULT = 4;
-  public static final int MSG_CANCEL_TASK = 5;
+  public static final int MSG_SUBMIT_TASK = 1;
+  public static final int MSG_SEND_RESULT = 2;
+  public static final int MSG_CANCEL_TASK = 3;
 
   /** The default battery level if we cannot read it from the system */
   public static final int DEFAULT_BATTERY_LEVEL = 0;

@@ -40,13 +40,9 @@ import android.telephony.NeighboringCellInfo;
 import android.telephony.PhoneStateListener;
 import android.telephony.SignalStrength;
 import android.telephony.TelephonyManager;
-import android.util.Log;
 import android.view.Display;
 import android.view.WindowManager;
-import android.webkit.WebView;
-
 import java.io.IOException;
-import java.lang.reflect.Field;
 import java.net.ConnectException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -62,7 +58,6 @@ import java.util.List;
 import com.mobiperf_library.Config;
 import com.mobiperf_library.DeviceInfo;
 import com.mobiperf_library.DeviceProperty;
-import com.mobiperf_library.R;
 
 
 /**
@@ -652,19 +647,24 @@ public class PhoneUtils {
     return new Location("MockProvider");
   }
 //TODO hardcoded values ...  
+  // Hongyi: it is not a good idea to hard code. Instead we can store those 
+  // strings in Config.java
   public String getServerUrl() {
 //    return context.getResources().getString(R.string.serverUrl);
-	  return "https://openmobiledata.appspot.com";
+//	  return "https://openmobiledata.appspot.com";
+	  return Config.serverUrl;
   }
   
   public String getAnonymousServerUrl() {
 //    return context.getResources().getString(R.string.anonymousServerUrl);
-	  return "https://openmobiledata.appspot.com/anonymous";
+//	  return "https://openmobiledata.appspot.com/anonymous";
+	  return Config.anonymousServerUrl;
   }
 
   public String getTestingServerUrl() {
 //    return context.getResources().getString(R.string.testServerUrl);
-	  return "";
+//	  return "";
+	  return Config.testServerUrl;
   }
 
   public boolean isTestingServer(String serverUrl) {
@@ -809,11 +809,11 @@ public class PhoneUtils {
     
     NetworkInfo activeNetwork = connectivityManager.getActiveNetworkInfo();
     String networkType = PhoneUtils.getPhoneUtils().getNetwork();
-//    String ipConnectivity = getIpConnectivity();
-//    String dnResolvability = getDnResolvability();
+    String ipConnectivity = getIpConnectivity();
+    String dnResolvability = getDnResolvability();
     // Hongyi: deal with MLab server failure
-    String ipConnectivity = "UNKNOWN";
-    String dnResolvability = "UNKNOWN";
+//    String ipConnectivity = "UNKNOWN";
+//    String dnResolvability = "UNKNOWN";
     Logger.w("IP connectivity is " + ipConnectivity);
     Logger.w("DN resolvability is " + dnResolvability);
     if (activeNetwork != null) {
