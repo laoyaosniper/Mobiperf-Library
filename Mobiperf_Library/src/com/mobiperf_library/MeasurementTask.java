@@ -19,13 +19,17 @@ import android.os.Parcel;
 import android.os.Parcelable;
 
 public abstract class MeasurementTask
-    implements Callable<MeasurementResult[]>, Comparable, Parcelable {
+    implements
+      Callable<MeasurementResult[]>,
+      Comparable,
+      Parcelable {
   protected MeasurementDesc measurementDesc;
   protected String taskId;
-  //  protected Context parent;
+  // protected Context parent;
 
 
   public static final int USER_PRIORITY = Integer.MIN_VALUE;
+  /* used for Server tasks */
   public static final int INVALID_PRIORITY = Integer.MAX_VALUE;
   public static final int INFINITE_COUNT = -1;
 
@@ -33,7 +37,7 @@ public abstract class MeasurementTask
   // Maps between the type of task and its readable name
   private static HashMap<String, String> measurementDescToType;
 
-  static {    
+  static {
     measurementTypes = new HashMap<String, Class>();
     measurementDescToType = new HashMap<String, String>();
     measurementTypes.put(PingTask.TYPE, PingTask.class);
@@ -54,32 +58,31 @@ public abstract class MeasurementTask
    * @param measurementDesc
    * @param parent
    */
-  protected MeasurementTask(MeasurementDesc measurementDesc/*, Context parent*/) {
+  protected MeasurementTask(MeasurementDesc measurementDesc) {
     super();
     this.measurementDesc = measurementDesc;
     generateTaskID();
-    //    this.parent = parent;
   }
-  
-  /* Compare priority as the first order. Then compare start time.*/
-  @Override
-  public int compareTo(Object t) {
-    MeasurementTask another = (MeasurementTask) t;
 
-    if (this.measurementDesc.startTime != null &&
-        another.measurementDesc.startTime != null) {
-      return this.measurementDesc.startTime.compareTo(
-        another.measurementDesc.startTime);
-    }
-    return 0;
-  }  
+  /* Compare priority as the first order. Then compare start time. */
+   @Override
+   public int compareTo(Object t) {
+   MeasurementTask another = (MeasurementTask) t;
+  
+   if (this.measurementDesc.startTime != null &&
+   another.measurementDesc.startTime != null) {
+   return this.measurementDesc.startTime.compareTo(
+   another.measurementDesc.startTime);
+   }
+   return 0;
+   }
 
   public long timeFromExecution() {
     return this.measurementDesc.startTime.getTime() - System.currentTimeMillis();
   }
 
   public boolean isPassedDeadline() {
-    if (this.measurementDesc.endTime == null) { 
+    if (this.measurementDesc.endTime == null) {
       return false;
     } else {
       long endTime = this.measurementDesc.endTime.getTime();
@@ -91,12 +94,12 @@ public abstract class MeasurementTask
     return this.measurementDesc.type;
   }
 
-  public String getKey(){
+  public String getKey() {
     return this.measurementDesc.key;
   }
 
-  public void setKey(String key){
-    this.measurementDesc.key=key;
+  public void setKey(String key) {
+    this.measurementDesc.key = key;
   }
 
 
@@ -104,18 +107,20 @@ public abstract class MeasurementTask
     return this.measurementDesc;
   }
 
-  /** Gets the currently available measurement descriptions*/
+  /** Gets the currently available measurement descriptions */
   public static Set<String> getMeasurementNames() {
     return measurementDescToType.keySet();
   }
 
-  /** Gets the currently available measurement types*/
+  /** Gets the currently available measurement types */
   public static Set<String> getMeasurementTypes() {
     return measurementTypes.keySet();
   }
 
-  /** Get the type of a measurement based on its name. Type is for JSON 
-   * interface only where as measurement name is a readable string for the UI */
+  /**
+   * Get the type of a measurement based on its name. Type is for JSON interface only where as
+   * measurement name is a readable string for the UI
+   */
   public static String getTypeForMeasurementName(String name) {
     return measurementDescToType.get(name);
   }
@@ -124,9 +129,11 @@ public abstract class MeasurementTask
     return measurementTypes.get(type);
   }
 
-  /* This is put here for consistency that all MeasurementTask should
-   * have a getDescClassForMeasurement() method. However, the MeasurementDesc 
-   * is abstract and cannot be instantiated */
+  /*
+   * This is put here for consistency that all MeasurementTask should have a
+   * getDescClassForMeasurement() method. However, the MeasurementDesc is abstract and cannot be
+   * instantiated
+   */
   public static Class getDescClass() throws InvalidClassException {
     throw new InvalidClassException("getDescClass() should only be invoked on "
         + "subclasses of MeasurementTask.");
@@ -135,14 +142,14 @@ public abstract class MeasurementTask
   public String getTaskId() {
     return taskId;
   }
-  
+
   /**
    * Returns a brief human-readable descriptor of the task.
    */
   public abstract String getDescriptor();
 
   @Override
-  public abstract MeasurementResult[] call() throws MeasurementError; 
+  public abstract MeasurementResult[] call() throws MeasurementError;
 
   /** Return the string indicating the measurement type. */
   public abstract String getType();
@@ -151,21 +158,22 @@ public abstract class MeasurementTask
   public abstract MeasurementTask clone();
 
   /**
-   * Stop the measurement, even when it is running. There is no side effect 
-   * if the measurement has not started or is already finished.
+   * Stop the measurement, even when it is running. There is no side effect if the measurement has
+   * not started or is already finished.
    */
   public abstract boolean stop();
 
 
   public abstract long getDuration();
-  public abstract void setDuration( long newDuration);
+
+  public abstract void setDuration(long newDuration);
 
 
   @Override
   public boolean equals(Object o) {
-    MeasurementTask another=(MeasurementTask)o;
-    if(this.getDescription().equals(another.getDescription()) &&
-        this.getType().equals(another.getType())){
+    MeasurementTask another = (MeasurementTask) o;
+    if (this.getDescription().equals(another.getDescription())
+        && this.getType().equals(another.getType())) {
       return true;
     }
     return false;
@@ -173,26 +181,28 @@ public abstract class MeasurementTask
 
   @Override
   public int hashCode() {
-    StringBuilder taskstrbld=new StringBuilder(getMeasurementType());
-    taskstrbld.append(",").append(this.measurementDesc.key)
-    .append(",").append(this.measurementDesc.startTime)
-    .append(",").append(this.measurementDesc.endTime)
-    .append(",").append(this.measurementDesc.intervalSec)
-    .append(",").append(this.measurementDesc.priority);
+    StringBuilder taskstrbld = new StringBuilder(getMeasurementType());
+    taskstrbld.append(",").append(this.measurementDesc.key).append(",")
+        .append(this.measurementDesc.startTime).append(",").append(this.measurementDesc.endTime)
+        .append(",").append(this.measurementDesc.intervalSec).append(",")
+        .append(this.measurementDesc.priority);
 
-    Object [] keys=this.measurementDesc.parameters.keySet().toArray();
+    Object[] keys = this.measurementDesc.parameters.keySet().toArray();
     Arrays.sort(keys);
-    for(Object k : keys){
-      taskstrbld.append(",").append(this.measurementDesc.parameters.get((String)k));
+    for (Object k : keys) {
+      taskstrbld.append(",").append(this.measurementDesc.parameters.get((String) k));
     }
 
     return taskstrbld.toString().hashCode();
   }
 
+  /**
+   * return hashcode of MeasurementTask as taskId.
+   */
   public void generateTaskID() {
-    taskId = this.hashCode()+"";
+    taskId = this.hashCode() + "";
   }
-  
+
   protected MeasurementTask(Parcel in) {
     ClassLoader loader = Thread.currentThread().getContextClassLoader();
     measurementDesc = in.readParcelable(loader);
@@ -209,5 +219,5 @@ public abstract class MeasurementTask
     dest.writeParcelable(measurementDesc, flags);
     dest.writeString(taskId);
   }
-  
+
 }

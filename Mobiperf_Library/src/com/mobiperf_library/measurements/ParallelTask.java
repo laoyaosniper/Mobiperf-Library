@@ -1,3 +1,16 @@
+/*
+ * Copyright 2013 RobustNet Lab, University of Michigan. All Rights Reserved.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License. You may obtain a copy of the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
+ * the License.
+ */
 package com.mobiperf_library.measurements;
 
 
@@ -24,7 +37,13 @@ import com.mobiperf_library.exceptions.MeasurementError;
 import com.mobiperf_library.util.Logger;
 
 
-
+/**
+ * 
+ * @author Ashkan Nikravesh (ashnik@umich.edu)
+ * 
+ * Parallel Task is a measurement task that can execute more than one measurement task 
+ * in parallel using a thread pool.
+ */
 public class ParallelTask extends MeasurementTask{
 
   private long duration;
@@ -86,7 +105,6 @@ public class ParallelTask extends MeasurementTask{
     super(new ParallelDesc(desc.key, desc.startTime, desc.endTime, desc.intervalSec,
       desc.count, desc.priority, desc.contextIntervalSec, desc.parameters));
     this.tasks=(List<MeasurementTask>) tasks.clone();
-    executor=Executors.newFixedThreadPool(this.tasks.size());
     long maxduration=0;
     for(MeasurementTask mt: tasks){
       if(mt.getDuration()>maxduration){
@@ -101,7 +119,7 @@ public class ParallelTask extends MeasurementTask{
     super(in);
     ClassLoader loader = Thread.currentThread().getContextClassLoader();
     MeasurementTask[] tempTasks = (MeasurementTask[])in.readParcelableArray(loader);
-    executor = Executors.newFixedThreadPool(tasks.size());
+//    executor = Executors.newFixedThreadPool(tasks.size());
     tasks = new ArrayList<MeasurementTask>();
     long maxDuration = 0;
     for ( MeasurementTask mt : tempTasks ) {
@@ -143,21 +161,21 @@ public class ParallelTask extends MeasurementTask{
   @Override
   public MeasurementResult[] call() throws MeasurementError {
     long timeout=duration;
-
+    executor=Executors.newFixedThreadPool(this.tasks.size());
 
     if(timeout==0){
       timeout=Config.DEFAULT_PARALLEL_TASK_DURATION;
     }else{
       timeout*=2;
     }
-    ArrayList<MeasurementResult> allresults=new ArrayList<MeasurementResult>();
+    ArrayList<MeasurementResult> allResults=new ArrayList<MeasurementResult>();
     List<Future<MeasurementResult[]>> futures;
     try {
       futures=executor.invokeAll(this.tasks,timeout,TimeUnit.MILLISECONDS);
       for(Future<MeasurementResult[]> f: futures){
         MeasurementResult[] r=f.get();
         for(int i=0;i<r.length;i++){
-          allresults.add(r[i]);
+          allResults.add(r[i]);
         }
       }
 
@@ -169,8 +187,8 @@ public class ParallelTask extends MeasurementTask{
     finally{
       executor.shutdown();
     }
-    return (MeasurementResult[])allresults.toArray(
-      new MeasurementResult[allresults.size()]);
+    return (MeasurementResult[])allResults.toArray(
+      new MeasurementResult[allResults.size()]);
   }
 
   @Override

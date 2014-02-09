@@ -71,6 +71,7 @@ public class TracerouteTask extends MeasurementTask
   private volatile boolean stopFlag;
   private volatile boolean pauseFlag;
   public ArrayList<HopInfo> hopHosts;//TODO: change it to private
+  private long totalRunningTime;
   private int ttl; 
   private int maxHopCount;
   /**
@@ -202,6 +203,7 @@ public class TracerouteTask extends MeasurementTask
     this.hopHosts= new ArrayList<HopInfo>();
     this.ttl=1;
     this.maxHopCount=((TracerouteDesc) this.measurementDesc).maxHopCount;
+    this.totalRunningTime=0;
   }
 
   protected TracerouteTask(Parcel in) {
@@ -213,6 +215,7 @@ public class TracerouteTask extends MeasurementTask
     hopHosts = new ArrayList<HopInfo>();
     ttl = in.readInt();
     maxHopCount = ((TracerouteDesc) this.measurementDesc).maxHopCount;
+    totalRunningTime=in.readLong();
   }
 
   public static final Parcelable.Creator<TracerouteTask> CREATOR
@@ -234,6 +237,7 @@ public class TracerouteTask extends MeasurementTask
     dest.writeByte((byte)(stopFlag ? 1 : 0));
     dest.writeByte((byte)(pauseFlag ? 1 : 0));
     dest.writeInt(ttl);
+    dest.writeLong(totalRunningTime);
   }
 
   /**
@@ -256,7 +260,6 @@ public class TracerouteTask extends MeasurementTask
     //    int ttl = 1;
     String hostIp = null;
     String target = task.target;
-    //    boolean success = false;
     taskProgress=TaskProgress.FAILED;
     stopFlag=false;
     pauseFlag=false;
@@ -590,7 +593,7 @@ public class TracerouteTask extends MeasurementTask
 
   @Override
   public long getDuration() {
-    return this.duration;
+    return this.duration-this.totalRunningTime;
   }
 
   @Override
@@ -613,6 +616,16 @@ public class TracerouteTask extends MeasurementTask
     stopFlag=true;
     cleanUp(pingProc);
     return true;
+  }
+
+  @Override
+  public long getTotalRunningTime() {
+    return this.totalRunningTime;
+  }
+  
+  @Override
+  public void updateTotalRunningTime(long duration){
+    this.totalRunningTime+=duration;
   }
 
 

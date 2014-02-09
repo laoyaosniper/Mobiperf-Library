@@ -53,7 +53,15 @@ import android.os.Message;
 import android.os.Messenger;
 import android.os.Parcelable;
 import android.os.RemoteException;
-
+/**
+ * 
+ * @author Ashkan Nikravesh (ashnik@umich.edu) + others
+ * The single scheduler thread that monitors the task queue, runs tasks at their specified times,
+ * and finally retrieves and reports results once they finish. The API can call the public methods
+ * or this Service. This service works as a remote service and always, we will have a single instance 
+ * of scheduler running on a device, although we can have more than one app that binds to this service
+ * and communicate with that. 
+ */
 public class MeasurementScheduler extends Service {
 
   public enum TaskStatus {// TODO changing paused to scheduled?
@@ -83,7 +91,10 @@ public class MeasurementScheduler extends Service {
 
   private AlarmManager alarmManager;
   private volatile ConcurrentHashMap<String, TaskStatus> tasksStatus;
+  // all the tasks are put in to this queue first, where they ordered based on their start time 
   private volatile PriorityBlockingQueue<MeasurementTask> mainQueue;
+  //ready queue, all the tasks in this queue are ready to be run. They sorted based on
+  //(1) priority (2) end time
   private volatile PriorityBlockingQueue<MeasurementTask> waitingTasksQueue;
   private volatile ConcurrentHashMap<MeasurementTask, Future<MeasurementResult[]>> pendingTasks;
   private volatile Date currentTaskStartTime;
@@ -255,14 +266,13 @@ public class MeasurementScheduler extends Service {
     return starttime;
   }
 
-  // public HashMap<String, Messenger> getClientsMap() {
-  // return mClients;
-  // }
 
   private synchronized void handleMeasurement() {
     try {
       Logger.e("In handleMeasurement");
       MeasurementTask task = mainQueue.peek();
+      //update the waiting queue. It contains all the tasks that are ready
+      //to be executed. Here we extract all those ready tasks from main queue
       while (task != null && task.timeFromExecution() <= 0) {
         mainQueue.poll();
         Logger.e(task.getDescription().key + " added to waiting list");
@@ -270,7 +280,7 @@ public class MeasurementScheduler extends Service {
         task = mainQueue.peek();
       }
       if (waitingTasksQueue.size() != 0) {
-        Logger.e("waiting list size= " + waitingTasksQueue.size());
+        Logger.i("waiting list size is " + waitingTasksQueue.size());
         MeasurementTask ready = waitingTasksQueue.poll();
 
         MeasurementDesc desc = ready.getDescription();
@@ -356,14 +366,15 @@ public class MeasurementScheduler extends Service {
       current = null;
       Logger.d("submitTask: current is null");
     }
-
+    //preemption condition
     if (current != null
         &&
         // current instanceof PreemptibleMeasurementTask &&
         newTask.getDescription().priority < current.getDescription().priority
         && new Date(current.getDuration() + getCurrentTaskStartTime().getTime()).after(newTask
             .getDescription().endTime)) {
-
+      //finding the cuurent instance in pending tasks. we can call 
+      //pause on that instance only
       if (pendingTasks.containsKey(current)) {
         for (MeasurementTask mt : pendingTasks.keySet()) {
           if (current.equals(mt)) {
@@ -376,6 +387,8 @@ public class MeasurementScheduler extends Service {
         if (current instanceof PreemptibleMeasurementTask
             && ((PreemptibleMeasurementTask) current).pause()) {
           pendingTasks.remove(current);
+          ((PreemptibleMeasurementTask)current).updateTotalRunningTime(
+            System.currentTimeMillis()- getCurrentTaskStartTime().getTime());
           if (newTask.timeFromExecution() <= 0) {
             mainQueue.add(newTask);
             mainQueue.add(current);

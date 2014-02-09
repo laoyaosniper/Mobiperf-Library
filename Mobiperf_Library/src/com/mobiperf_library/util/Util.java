@@ -28,6 +28,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.Map;
 import java.util.Random;
+import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -226,14 +227,14 @@ public class Util {
     }
     return pingExecutable;
   }  
-  
-  public static String generateClientKey(){
-	  String result="";
-	  Random generator = new Random();
-	  while(result.length()<=10){
-		  int randomInt = generator.nextInt(75)+48;
-		  result+=(char)randomInt;
-	  }
-	  return result;
+
+  /**
+   * Generates a random string (10 chars) that can be used as client key
+   * @return 10 least significant bytes of a random UUID
+   */
+  public static String generateRandomClientKey(){
+    UUID uuid=UUID.randomUUID();
+    String uuidStr=uuid.toString();
+    return uuidStr.substring(uuidStr.length()-10);
   }
 }

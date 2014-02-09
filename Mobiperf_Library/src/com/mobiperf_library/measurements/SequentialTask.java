@@ -1,3 +1,16 @@
+/*
+ * Copyright 2013 RobustNet Lab, University of Michigan. All Rights Reserved.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License. You may obtain a copy of the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
+ * the License.
+ */
 package com.mobiperf_library.measurements;
 
 import java.io.InvalidClassException;
@@ -18,13 +31,18 @@ import com.mobiperf_library.MeasurementDesc;
 import com.mobiperf_library.MeasurementResult;
 import com.mobiperf_library.MeasurementTask;
 import com.mobiperf_library.exceptions.MeasurementError;
-import com.mobiperf_library.measurements.ParallelTask.ParallelDesc;
 import com.mobiperf_library.util.Logger;
 
-import android.content.Context;
 import android.os.Parcel;
 import android.os.Parcelable;
 
+/**
+ * 
+ * @author Ashkan Nikravesh (ashnik@umich.edu)
+ * 
+ * Sequential Task is a measurement task that can execute more than one measurement task 
+ * in series.
+ */
 public class SequentialTask extends MeasurementTask{
   private List<MeasurementTask> tasks;
 
@@ -144,7 +162,7 @@ public class SequentialTask extends MeasurementTask{
   @Override
   public MeasurementResult[] call() throws MeasurementError {
 
-    ArrayList<MeasurementResult> allresults=new ArrayList<MeasurementResult>();
+    ArrayList<MeasurementResult> allResults=new ArrayList<MeasurementResult>();
     try {
       //      futures=executor.invokeAll(this.tasks,timeout,TimeUnit.MILLISECONDS);
       for(MeasurementTask mt: tasks){
@@ -153,13 +171,14 @@ public class SequentialTask extends MeasurementTask{
         }
         Future<MeasurementResult[]> f=executor.submit(mt);
         currentTask=mt;
-        MeasurementResult[] r;
+        MeasurementResult[] results;
+        //specifying timeout for each task based on its duration
         try {
-          r = f.get( mt.getDuration()==0 ?
+          results = f.get( mt.getDuration()==0 ?
               Config.DEFAULT_TASK_DURATION_TIMEOUT * 2 : mt.getDuration() * 2,
               TimeUnit.MILLISECONDS);
-          for(int i=0;i<r.length;i++){//TODO
-            allresults.add(r[i]);
+          for(int i=0;i<results.length;i++){
+            allResults.add(results[i]);
           }
         } catch (TimeoutException e) {
           if(mt.stop()){
@@ -176,8 +195,8 @@ public class SequentialTask extends MeasurementTask{
     finally{
       executor.shutdown();
     }
-    return (MeasurementResult[])allresults.toArray(
-      new MeasurementResult[allresults.size()]);
+    return (MeasurementResult[])allResults.toArray(
+      new MeasurementResult[allResults.size()]);
   }
 
   @Override
