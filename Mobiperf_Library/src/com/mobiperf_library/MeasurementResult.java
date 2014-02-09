@@ -1,16 +1,15 @@
-/* Copyright 2012 Google Inc.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+/*
+ * Copyright 2012 Google Inc.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License. You may obtain a copy of the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
+ * the License.
  */
 package com.mobiperf_library;
 
@@ -53,7 +52,7 @@ public class MeasurementResult implements Parcelable {
 
   private String deviceId;
   private DeviceProperty properties;// TODO needed for sending back the
-                    // results to server
+  // results to server
   private long timestamp;
   private boolean success;
   private String type;
@@ -67,15 +66,14 @@ public class MeasurementResult implements Parcelable {
   }
 
   /**
-   * @param deviceProperty
-   * @param type
+   * @param deviceProperty DeviceProperty object which will be attached to the result
+   * @param type measurement type
    * @param timestamp
-   * @param success
-   * @param measurementDesc
+   * @param taskProgress progress of the task: COMPLETED, PAUSED, FAILED
+   * @param measurementDesc MeasurementDesc of the task
    */
-  public MeasurementResult(String id, DeviceProperty deviceProperty,
-    String type, long timeStamp, TaskProgress taskProgress,
-    MeasurementDesc measurementDesc) {
+  public MeasurementResult(String id, DeviceProperty deviceProperty, String type, long timeStamp,
+                           TaskProgress taskProgress, MeasurementDesc measurementDesc) {
     super();
 
     this.deviceId = id;
@@ -92,75 +90,76 @@ public class MeasurementResult implements Parcelable {
     this.measurementDesc = measurementDesc;
     this.measurementDesc.parameters = measurementDesc.parameters;
     this.values = new HashMap<String, String>();
-    this.contextResults= new ArrayList<HashMap<String,String>>();
+    this.contextResults = new ArrayList<HashMap<String, String>>();
   }
-  
+
 
 
   @SuppressWarnings("unchecked")
-  public void addContextResults(ArrayList<HashMap<String, String>> contextResults){
-    this.contextResults=(ArrayList<HashMap<String, String>>) contextResults.clone();
+  public void addContextResults(ArrayList<HashMap<String, String>> contextResults) {
+    this.contextResults = (ArrayList<HashMap<String, String>>) contextResults.clone();
   }
-  
+
   private static String getStackTrace(Throwable error) {
     final Writer result = new StringWriter();
     final PrintWriter printWriter = new PrintWriter(result);
     error.printStackTrace(printWriter);
     return result.toString();
   }
-  
-  public static MeasurementResult[] getFailureResult(MeasurementTask task,
-    Throwable error) {
+
+  /**
+   * Creates measurement result for the failed task by including the error message
+   * 
+   * @param task input task that failed
+   * @param error that occurred during the execution of task
+   * @return list of failure measurement results for created for the input task
+   */
+  public static MeasurementResult[] getFailureResult(MeasurementTask task, Throwable error) {
     PhoneUtils phoneUtils = PhoneUtils.getPhoneUtils();
     ArrayList<MeasurementResult> results = new ArrayList<MeasurementResult>();
-    
-    if ( task.getType().equals(ParallelTask.TYPE) ) {
-      ParallelTask pTask = (ParallelTask)task;
-      MeasurementResult[] tempResults = MeasurementResult.getFailureResults(
-        pTask.getTasks(), error);
-      for ( MeasurementResult r : tempResults ) {
+
+    if (task.getType().equals(ParallelTask.TYPE)) {
+      ParallelTask pTask = (ParallelTask) task;
+      MeasurementResult[] tempResults =
+          MeasurementResult.getFailureResults(pTask.getTasks(), error);
+      for (MeasurementResult r : tempResults) {
         results.add(r);
       }
-    }
-    else if (task.getType().equals(SequentialTask.TYPE) ) {
-      SequentialTask sTask = (SequentialTask)task;
-      MeasurementResult[] tempResults = MeasurementResult.getFailureResults(
-        sTask.getTasks(), error);
-      for ( MeasurementResult r : tempResults ) {
+    } else if (task.getType().equals(SequentialTask.TYPE)) {
+      SequentialTask sTask = (SequentialTask) task;
+      MeasurementResult[] tempResults =
+          MeasurementResult.getFailureResults(sTask.getTasks(), error);
+      for (MeasurementResult r : tempResults) {
         results.add(r);
       }
-    }
-    else {
-      MeasurementResult r = new MeasurementResult(
-        phoneUtils.getDeviceInfo().deviceId,
-        phoneUtils.getDeviceProperty(),
-        task.getType(),
-        System.currentTimeMillis() * 1000,
-        TaskProgress.FAILED,
-        task.measurementDesc);
+    } else {
+      MeasurementResult r =
+          new MeasurementResult(phoneUtils.getDeviceInfo().deviceId,
+            phoneUtils.getDeviceProperty(), task.getType(), System.currentTimeMillis() * 1000,
+            TaskProgress.FAILED, task.measurementDesc);
       Logger.e(error.toString() + "\n" + getStackTrace(error));
-//      r.addResult("error", error.toString() + "\n" + getStackTrace(error));
       r.addResult("error", error.toString());
       results.add(r);
     }
     return results.toArray(new MeasurementResult[results.size()]);
   }
-  
-  private static MeasurementResult[] getFailureResults(
-       MeasurementTask[] tasks, Throwable err) {
+
+  private static MeasurementResult[] getFailureResults(MeasurementTask[] tasks, Throwable err) {
     ArrayList<MeasurementResult> results = new ArrayList<MeasurementResult>();
-    if ( tasks != null ) {
-      for ( MeasurementTask t : tasks ) {
-        MeasurementResult[] tempResults = getFailureResult(t, err); 
-        for ( MeasurementResult r : tempResults ) {
+    if (tasks != null) {
+      for (MeasurementTask t : tasks) {
+        MeasurementResult[] tempResults = getFailureResult(t, err);
+        for (MeasurementResult r : tempResults) {
           results.add(r);
         }
       }
     }
     return results.toArray(new MeasurementResult[results.size()]);
   }
-  
-  /* Returns the type of this result */
+
+  /**
+   * Returns the type of this result
+   */
   public String getType() {
     return measurementDesc.getType();
   }
@@ -173,22 +172,22 @@ public class MeasurementResult implements Parcelable {
     this.taskProgress = progress;
   }
 
-  public boolean isSucceed() {
-    return this.success;
-  }
-  
+  /**
+   * adds a new task parameter to the list of parameters
+   * @param key 
+   * @param value
+   */
   public void setParameter(String key, String value) {
     this.measurementDesc.parameters.put(key, value);
   }
-  
+
   public String getParameter(String key) {
     return this.measurementDesc.parameters.get(key);
   }
-  
+
   /* Add the measurement results of type String into the class */
   public void addResult(String resultType, Object resultVal) {
-    this.values.put(resultType,
-        MeasurementJsonConvertor.toJsonString(resultVal));
+    this.values.put(resultType, MeasurementJsonConvertor.toJsonString(resultVal));
   }
 
   /* Returns a string representation of the result */
@@ -197,8 +196,8 @@ public class MeasurementResult implements Parcelable {
     StringBuilder builder = new StringBuilder();
     StringBuilderPrinter printer = new StringBuilderPrinter(builder);
     Formatter format = new Formatter();
-//    String results=getContextResult();
-    try {      
+    // String results=getContextResult();
+    try {
       if (type.equals(PingTask.TYPE)) {
         getPingResult(printer, values);
       } else if (type.equals(HttpTask.TYPE)) {
@@ -212,28 +211,20 @@ public class MeasurementResult implements Parcelable {
       } else if (type.equals(TCPThroughputTask.TYPE)) {
         getTCPThroughputResult(printer, values);
       } else {
-        Logger.e("Failed to get results for unknown measurement type "
-            + type);
+        Logger.e("Failed to get results for unknown measurement type " + type);
       }
       return builder.toString();
     } catch (NumberFormatException e) {
-      Logger.e(
-          "Exception occurs during constructing result string for user",
-          e);
+      Logger.e("Exception occurs during constructing result string for user", e);
     } catch (ClassCastException e) {
-      Logger.e(
-          "Exception occurs during constructing result string for user",
-          e);
+      Logger.e("Exception occurs during constructing result string for user", e);
     } catch (Exception e) {
-      Logger.e(
-          "Exception occurs during constructing result string for user",
-          e);
+      Logger.e("Exception occurs during constructing result string for user", e);
     }
     return "Measurement has failed";
   }
 
-  private void getPingResult(StringBuilderPrinter printer,
-      HashMap<String, String> values) {
+  private void getPingResult(StringBuilderPrinter printer, HashMap<String, String> values) {
     PingDesc desc = (PingDesc) measurementDesc;
     printer.println("[Ping]");
     printer.println("Target: " + desc.target);
@@ -243,16 +234,14 @@ public class MeasurementResult implements Parcelable {
       ipAddress = "Unknown";
     }
     printer.println("IP address: " + ipAddress);
-    printer.println("Timestamp: "
-        + Util.getTimeStringFromMicrosecond(properties.timestamp));
+    printer.println("Timestamp: " + Util.getTimeStringFromMicrosecond(properties.timestamp));
     printIPTestResult(printer);
 
     if (taskProgress == TaskProgress.COMPLETED) {
       float packetLoss = Float.parseFloat(values.get("packet_loss"));
       int count = Integer.parseInt(values.get("packets_sent"));
-      printer.println("\n" + count + " packets transmitted, "
-          + (int) (count * (1 - packetLoss)) + " received, "
-          + (packetLoss * 100) + "% packet loss");
+      printer.println("\n" + count + " packets transmitted, " + (int) (count * (1 - packetLoss))
+        + " received, " + (packetLoss * 100) + "% packet loss");
 
       float value = Float.parseFloat(values.get("mean_rtt_ms"));
       printer.println("Mean RTT: " + String.format("%.1f", value) + " ms");
@@ -272,13 +261,11 @@ public class MeasurementResult implements Parcelable {
     }
   }
 
-  private void getHttpResult(StringBuilderPrinter printer,
-      HashMap<String, String> values) {
+  private void getHttpResult(StringBuilderPrinter printer, HashMap<String, String> values) {
     HttpDesc desc = (HttpDesc) measurementDesc;
     printer.println("[HTTP]");
     printer.println("URL: " + desc.url);
-    printer.println("Timestamp: "
-        + Util.getTimeStringFromMicrosecond(properties.timestamp));
+    printer.println("Timestamp: " + Util.getTimeStringFromMicrosecond(properties.timestamp));
     printIPTestResult(printer);
 
     if (taskProgress == TaskProgress.COMPLETED) {
@@ -286,26 +273,21 @@ public class MeasurementResult implements Parcelable {
       int bodyLen = Integer.parseInt(values.get("body_len"));
       int time = Integer.parseInt(values.get("time_ms"));
       printer.println("");
-      printer.println("Downloaded " + (headerLen + bodyLen)
-          + " bytes in " + time + " ms");
-      printer.println("Bandwidth: " + (headerLen + bodyLen) * 8 / time
-          + " Kbps");
+      printer.println("Downloaded " + (headerLen + bodyLen) + " bytes in " + time + " ms");
+      printer.println("Bandwidth: " + (headerLen + bodyLen) * 8 / time + " Kbps");
     } else if (taskProgress == TaskProgress.PAUSED) {
       printer.println("Http paused!");
     } else {
-      printer.println("Http download failed, status code "
-          + values.get("code"));
+      printer.println("Http download failed, status code " + values.get("code"));
       printer.println("Error: " + values.get("error"));
     }
   }
 
-  private void getDnsResult(StringBuilderPrinter printer,
-      HashMap<String, String> values) {
+  private void getDnsResult(StringBuilderPrinter printer, HashMap<String, String> values) {
     DnsLookupDesc desc = (DnsLookupDesc) measurementDesc;
     printer.println("[DNS Lookup]");
     printer.println("Target: " + desc.target);
-    printer.println("Timestamp: "
-        + Util.getTimeStringFromMicrosecond(properties.timestamp));
+    printer.println("Timestamp: " + Util.getTimeStringFromMicrosecond(properties.timestamp));
     printIPTestResult(printer);
 
     if (taskProgress == TaskProgress.COMPLETED) {
@@ -323,13 +305,11 @@ public class MeasurementResult implements Parcelable {
     }
   }
 
-  private void getTracerouteResult(StringBuilderPrinter printer,
-      HashMap<String, String> values) {
+  private void getTracerouteResult(StringBuilderPrinter printer, HashMap<String, String> values) {
     TracerouteDesc desc = (TracerouteDesc) measurementDesc;
     printer.println("[Traceroute]");
     printer.println("Target: " + desc.target);
-    printer.println("Timestamp: "
-        + Util.getTimeStringFromMicrosecond(properties.timestamp));
+    printer.println("Timestamp: " + Util.getTimeStringFromMicrosecond(properties.timestamp));
     printIPTestResult(printer);
 
     if (taskProgress == TaskProgress.COMPLETED) {
@@ -373,8 +353,7 @@ public class MeasurementResult implements Parcelable {
     }
   }
 
-  private void getUDPBurstResult(StringBuilderPrinter printer,
-                                 HashMap<String, String> values) {
+  private void getUDPBurstResult(StringBuilderPrinter printer, HashMap<String, String> values) {
     UDPBurstDesc desc = (UDPBurstDesc) measurementDesc;
     if (desc.dirUp) {
       printer.println("[UDPBurstUp]");
@@ -382,23 +361,20 @@ public class MeasurementResult implements Parcelable {
       printer.println("[UDPBurstDown]");
     }
     printer.println("Target: " + desc.target);
-    printer.println("Timestamp: "
-        + Util.getTimeStringFromMicrosecond(properties.timestamp));
+    printer.println("Timestamp: " + Util.getTimeStringFromMicrosecond(properties.timestamp));
     printIPTestResult(printer);
-    
-    if ( taskProgress == TaskProgress.COMPLETED ) {
+
+    if (taskProgress == TaskProgress.COMPLETED) {
       printer.println("IP addr: " + values.get("target_ip"));
-      printer.println("Timestamp: " + 
-          Util.getTimeStringFromMicrosecond(properties.timestamp));
+      printer.println("Timestamp: " + Util.getTimeStringFromMicrosecond(properties.timestamp));
       printIPTestResult(printer);
       printer.println("Packet size: " + desc.packetSizeByte + "B");
       printer.println("Number of packets to be sent: " + desc.udpBurstCount);
       printer.println("Interval between packets: " + desc.udpInterval + "ms");
 
-      String lossRatio = String.format("%.2f"
-        , Double.parseDouble(values.get("loss_ratio")) * 100);
-      String outOfOrderRatio = String.format("%.2f"
-        , Double.parseDouble(values.get("out_of_order_ratio")) * 100);
+      String lossRatio = String.format("%.2f", Double.parseDouble(values.get("loss_ratio")) * 100);
+      String outOfOrderRatio =
+          String.format("%.2f", Double.parseDouble(values.get("out_of_order_ratio")) * 100);
       printer.println("\nLoss ratio: " + lossRatio + "%");
       printer.println("Out of order ratio: " + outOfOrderRatio + "%");
       printer.println("Jitter: " + values.get("jitter") + "ms");
@@ -406,11 +382,10 @@ public class MeasurementResult implements Parcelable {
       printer.println("UDP Burst paused!");
     } else {
       printer.println("Error: " + values.get("error"));
-    } 
+    }
   }
 
-  private void getTCPThroughputResult(StringBuilderPrinter printer,
-                                      HashMap<String, String> values) {
+  private void getTCPThroughputResult(StringBuilderPrinter printer, HashMap<String, String> values) {
     TCPThroughputDesc desc = (TCPThroughputDesc) measurementDesc;
     if (desc.dir_up) {
       printer.println("[TCP Uplink]");
@@ -418,11 +393,10 @@ public class MeasurementResult implements Parcelable {
       printer.println("[TCP Downlink]");
     }
     printer.println("Target: " + desc.target);
-    printer.println("Timestamp: " +
-        Util.getTimeStringFromMicrosecond(properties.timestamp));
+    printer.println("Timestamp: " + Util.getTimeStringFromMicrosecond(properties.timestamp));
     printIPTestResult(printer);
 
-    if ( taskProgress == TaskProgress.COMPLETED ) {
+    if (taskProgress == TaskProgress.COMPLETED) {
       printer.println("");
       // Display result with precision up to 2 digit
       String speedInJSON = values.get("tcp_speed_results");
@@ -433,31 +407,30 @@ public class MeasurementResult implements Parcelable {
       double KB = Math.pow(2, 10);
       if (tp < 0) {
         displayResult = "No results available.";
-      } else if (tp > KB*KB) {
-        displayResult = "Speed: " + String.format("%.2f",tp/(KB*KB)) + " Gbps";
-      } else if (tp > KB ) {
-        displayResult = "Speed: " + String.format("%.2f",tp/KB) + " Mbps";
+      } else if (tp > KB * KB) {
+        displayResult = "Speed: " + String.format("%.2f", tp / (KB * KB)) + " Gbps";
+      } else if (tp > KB) {
+        displayResult = "Speed: " + String.format("%.2f", tp / KB) + " Mbps";
       } else {
         displayResult = "Speed: " + String.format("%.2f", tp) + " Kbps";
       }
 
       // Append notice for exceeding data limit
       if (dataLimitExceedInJSON.equals("true")) {
-        displayResult += "\n* Task finishes earlier due to exceeding " +
-            "maximum number of "+ ((desc.dir_up) ? "transmitted" : "received") +
-            " bytes";
+        displayResult +=
+            "\n* Task finishes earlier due to exceeding " + "maximum number of "
+                + ((desc.dir_up) ? "transmitted" : "received") + " bytes";
       }
       printer.println(displayResult);
     } else if (taskProgress == TaskProgress.PAUSED) {
       printer.println("TCP Throughput paused!");
     } else {
       printer.println("Error: " + values.get("error"));
-    } 
+    }
   }
 
   /**
-   * Removes the quotes surrounding the string. If |str| is null, returns
-   * null.
+   * Removes the quotes surrounding the string. If |str| is null, returns null.
    */
   private String removeQuotes(String str) {
     return str != null ? str.replaceAll("^\"|\"", "") : null;
@@ -468,8 +441,7 @@ public class MeasurementResult implements Parcelable {
    */
   private void printIPTestResult(StringBuilderPrinter printer) {
     printer.println("IPv4/IPv6 Connectivity: " + properties.ipConnectivity);
-    printer.println("IPv4/IPv6 Domain Name Resolvability: "
-        + properties.dnResolvability);
+    printer.println("IPv4/IPv6 Domain Name Resolvability: " + properties.dnResolvability);
   }
 
   /** Necessary function for Parcelable **/
@@ -487,11 +459,11 @@ public class MeasurementResult implements Parcelable {
     }
     measurementDesc = in.readParcelable(loader);
     values = in.readHashMap(loader);
-    contextResults=in.readArrayList(loader);
+    contextResults = in.readArrayList(loader);
 
   }
 
-  public static final Parcelable.Creator<MeasurementResult> CREATOR = 
+  public static final Parcelable.Creator<MeasurementResult> CREATOR =
       new Parcelable.Creator<MeasurementResult>() {
     public MeasurementResult createFromParcel(Parcel in) {
       return new MeasurementResult(in);
@@ -516,7 +488,7 @@ public class MeasurementResult implements Parcelable {
     out.writeSerializable(taskProgress);
     out.writeParcelable(measurementDesc, flag);
     out.writeMap(values);
-    out.writeList(contextResults);//TODO (Ashkan): check this
+    out.writeList(contextResults);// TODO (Ashkan): check this
 
   }
 }

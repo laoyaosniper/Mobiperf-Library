@@ -81,7 +81,7 @@ public class ServerMeasurementTask implements Callable<MeasurementResult []> {
       phoneUtils.acquireWakeLock();
 
       if(!(phoneUtils.isCharging() ||
-          phoneUtils.getCurrentBatteryLevel() > Config.minBatteryThreshold)){
+          phoneUtils.getCurrentBatteryLevel() > Config.MIN_BATTERY_THRESHOLD)){
         throw new MeasurementSkippedException("Not enough battery power");
       }
       if (scheduler.isPauseRequested()) {
@@ -95,6 +95,9 @@ public class ServerMeasurementTask implements Callable<MeasurementResult []> {
         results = realTask.call(); 
         ArrayList<HashMap<String, String>> contextResults = 
             contextCollector.stopCollector();
+        for (MeasurementResult r: results){
+          r.addContextResults(contextResults);
+        }
         broadcastMeasurementEnd(results, null);
       } catch (MeasurementError e) {
         String error = "Server measurement " + realTask.getDescriptor() 

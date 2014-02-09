@@ -1,7 +1,4 @@
 package com.mobiperf_library;
-
-
-
 import java.security.InvalidParameterException;
 
 import android.content.Intent;

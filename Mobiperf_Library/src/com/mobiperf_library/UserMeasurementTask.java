@@ -87,7 +87,9 @@ public class UserMeasurementTask implements Callable<MeasurementResult[]> {
       results = realTask.call();
       ArrayList<HashMap<String, String>> contextResults =
           contextCollector.stopCollector();
-      //TODO attach the results to the MeasurementResults 
+      for (MeasurementResult r: results){
+        r.addContextResults(contextResults);
+      } 
     } catch (MeasurementError e) {
       Logger.e("User measurement " + realTask.getDescriptor() + " has failed");
       Logger.e(e.getMessage());
