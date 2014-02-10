@@ -8,12 +8,12 @@ package com.mobiperf_library;
 public interface Config {
 
   /**
-   * Strings in string.xml
+   * Strings migrated from string.xml
    */
-  public static final String serverUrl = "https://openmobiledata.appspot.com";
-  public static final String anonymousServerUrl = "https://openmobiledata.appspot.com/anonymous";
-  public static final String testServerUrl = "";
-  public static final String defaultUser = "Anonymous";
+  public static final String SERVER_URL = "https://openmobiledata.appspot.com";
+  public static final String ANONYMOUS_SERVER_URL = "https://openmobiledata.appspot.com/anonymous";
+  public static final String TEST_SERVER_URL = "";
+  public static final String DEFAULT_USER = "Anonymous";
 
   public static final int MAX_TASK_QUEUE_SIZE = 100;
 
@@ -32,9 +32,9 @@ public interface Config {
   public static final int MIN_BATTERY_THRESHOLD = 20;
 
 
-  /** Constants for message **/
+  /** Types for message between API and scheduler**/
   public static final int MSG_SUBMIT_TASK = 1;
-  public static final int MSG_SEND_RESULT = 2;
+  public static final int MSG_RESULT = 2;
   public static final int MSG_CANCEL_TASK = 3;
 
   /** The default battery level if we cannot read it from the system */

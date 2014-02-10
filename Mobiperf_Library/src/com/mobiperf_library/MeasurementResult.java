@@ -54,7 +54,6 @@ public class MeasurementResult implements Parcelable {
   private DeviceProperty properties;// TODO needed for sending back the
   // results to server
   private long timestamp;
-  private boolean success;
   private String type;
   private TaskProgress taskProgress;
   private MeasurementDesc measurementDesc;
@@ -81,11 +80,6 @@ public class MeasurementResult implements Parcelable {
     this.properties = deviceProperty;
     this.timestamp = timeStamp;
     this.taskProgress = taskProgress;
-    if (this.taskProgress == TaskProgress.COMPLETED) {
-      this.success = true;
-    } else {
-      this.success = false;
-    }
 
     this.measurementDesc = measurementDesc;
     this.measurementDesc.parameters = measurementDesc.parameters;
@@ -144,6 +138,13 @@ public class MeasurementResult implements Parcelable {
     return results.toArray(new MeasurementResult[results.size()]);
   }
 
+  /**
+   * Generating failure results for the task list in parallel and sequential
+   * tasks. Not public visible
+   * @param tasks task list in parallel and sequential tasks
+   * @param err error that occurred during the execution of task
+   * @return list of failure measurement results of the task list
+   */
   private static MeasurementResult[] getFailureResults(MeasurementTask[] tasks, Throwable err) {
     ArrayList<MeasurementResult> results = new ArrayList<MeasurementResult>();
     if (tasks != null) {
@@ -164,23 +165,41 @@ public class MeasurementResult implements Parcelable {
     return measurementDesc.getType();
   }
 
+  /**
+   * @return Task progress for this task
+   */
   public TaskProgress getTaskProgress() {
     return this.taskProgress;
   }
 
+  /**
+   * @param progress new task progress to be set
+   */
   public void setTaskProgress(TaskProgress progress) {
     this.taskProgress = progress;
   }
 
   /**
+   * Check if this task is succeed
+   * @return true if taskProgress equals to COMPLETED, false otherwise
+   */
+  public boolean isSucceed() {
+    return this.taskProgress == TaskProgress.COMPLETED ? true : false; 
+  }
+  
+  /**
    * adds a new task parameter to the list of parameters
-   * @param key 
-   * @param value
+   * @param key key for new parameter
+   * @param value value for new parameter
    */
   public void setParameter(String key, String value) {
     this.measurementDesc.parameters.put(key, value);
   }
 
+  /**
+   * @param key key for retrieving value
+   * @return value for that key
+   */
   public String getParameter(String key) {
     return this.measurementDesc.parameters.get(key);
   }
@@ -452,11 +471,6 @@ public class MeasurementResult implements Parcelable {
     timestamp = in.readLong();
     type = in.readString();
     taskProgress = (TaskProgress) in.readSerializable();
-    if (this.taskProgress == TaskProgress.COMPLETED) {
-      this.success = true;
-    } else {
-      this.success = false;
-    }
     measurementDesc = in.readParcelable(loader);
     values = in.readHashMap(loader);
     contextResults = in.readArrayList(loader);

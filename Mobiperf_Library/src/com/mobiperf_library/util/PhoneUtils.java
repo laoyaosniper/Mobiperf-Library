@@ -646,25 +646,19 @@ public class PhoneUtils {
   private Location getMockLocation() {
     return new Location("MockProvider");
   }
-//TODO hardcoded values ...  
-  // Hongyi: it is not a good idea to hard code. Instead we can store those 
-  // strings in Config.java
+  
+  // Hongyi: it is not a good idea to hard code here. Instead we can move those 
+  // strings from string.xml to Config.java
   public String getServerUrl() {
-//    return context.getResources().getString(R.string.serverUrl);
-//	  return "https://openmobiledata.appspot.com";
-	  return Config.serverUrl;
+	  return Config.SERVER_URL;
   }
   
   public String getAnonymousServerUrl() {
-//    return context.getResources().getString(R.string.anonymousServerUrl);
-//	  return "https://openmobiledata.appspot.com/anonymous";
-	  return Config.anonymousServerUrl;
+	  return Config.ANONYMOUS_SERVER_URL;
   }
 
   public String getTestingServerUrl() {
-//    return context.getResources().getString(R.string.testServerUrl);
-//	  return "";
-	  return Config.testServerUrl;
+	  return Config.TEST_SERVER_URL;
   }
 
   public boolean isTestingServer(String serverUrl) {

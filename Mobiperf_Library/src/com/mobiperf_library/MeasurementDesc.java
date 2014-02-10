@@ -47,7 +47,7 @@ public abstract class MeasurementDesc implements Parcelable {
    *        A count of 0 means to continue the measurement indefinitely (until end_time).
    * @param priority Larger values represent higher priorities.
    * @param contextIntervalSec interval between the context collection
-   * @param params Measurement parameters Measurement parameters.
+   * @param params Measurement parameters.
    */
   protected MeasurementDesc(String type, String key, Date startTime, Date endTime,
       double intervalSec, long count, long priority, int contextIntervalSec,
@@ -106,6 +106,10 @@ public abstract class MeasurementDesc implements Parcelable {
 
   }
 
+  /**
+   * Necessary functions for Parcelable
+   * @param in Parcel object containing measurement descriptor
+   */
   protected MeasurementDesc(Parcel in) {
     ClassLoader loader = Thread.currentThread().getContextClassLoader();
     type = in.readString();

@@ -21,12 +21,16 @@ import android.os.Handler;
 import android.os.Message;
 
 /**
- * @author Hongyi Yao
- * Define message handler to process cross-process request
+ * @author Hongyi Yao (hyyao@umich.edu)
+ * Define message handler to process message request from API
  */
 public class APIRequestHandler extends Handler {
   MeasurementScheduler scheduler;
   
+  /**
+   * Constructor for APIRequestHandler
+   * @param scheduler Parent context for this object
+   */
   public APIRequestHandler(MeasurementScheduler scheduler) {
     this.scheduler = scheduler;
   }
@@ -34,39 +38,20 @@ public class APIRequestHandler extends Handler {
   @Override
   public void handleMessage(Message msg) {
     Bundle data = msg.getData();
-    // TODO(Hongyi): check it
-    data.setClassLoader(scheduler.getClassLoader());
+    data.setClassLoader(scheduler.getApplicationContext().getClassLoader());
     String clientKey = data.getString("clientKey");
 
-    MeasurementTask task;
+    MeasurementTask task = null;
     String taskId = null;
     switch (msg.what) {
-//      case Config.MSG_REGISTER_CLIENT:
-//        if ( clientKey != null ) {
-//          scheduler.getClientsMap().put(clientKey, msg.replyTo);
-//          Logger.d("Get register client message! key = " + clientKey);
-//        }
-//        else {
-//          Logger.e("No client key found when registering!");
-//        }
-//        break;
-//      case Config.MSG_UNREGISTER_CLIENT:
-//        if ( clientKey != null ) {
-//          scheduler.getClientsMap().remove(clientKey);
-//          Logger.d("Unregister client key = " + clientKey);
-//        }
-//        else {
-//          Logger.e("No client key found when unregistering!");
-//        }
-//        break;
       case Config.MSG_SUBMIT_TASK:
-        task = null;
         task = (MeasurementTask) data.getParcelable("measurementTask");
         if ( task != null ) {
-          // TODO(Hongyi): for delay measurement
-          task.getDescription().parameters.put("ts_scheduler_recv", String.valueOf(System.currentTimeMillis()));
+          // Hongyi: for delay measurement
+          task.getDescription().parameters.put("ts_scheduler_recv",
+            String.valueOf(System.currentTimeMillis()));
           
-          Logger.d("Hongyi: Add new task! taskId " + task.getTaskId());
+          Logger.d("New task added: taskId " + task.getTaskId());
           
           taskId = scheduler.submitTask(task);
         }
@@ -79,7 +64,7 @@ public class APIRequestHandler extends Handler {
         }
         break;
       default:
-        super.handleMessage(msg);
+        break;
     }
   }
 }

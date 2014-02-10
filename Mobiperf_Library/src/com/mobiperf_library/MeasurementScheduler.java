@@ -171,11 +171,7 @@ public class MeasurementScheduler extends Service {
             tasksStatus.put(taskid, TaskStatus.FINISHED);
             Parcelable[] results = intent.getParcelableArrayExtra(UpdateIntent.RESULT_PAYLOAD);
             if (results != null) {
-              if (priority == MeasurementTask.INVALID_PRIORITY) {
-                sendServerResultMessage(results, taskid, priority);
-              } else {
-                sendUserResultMessage(results, taskKey, taskid, priority);
-              }
+              sendResultToClient(results, priority, taskKey, taskid);
             }
             handleMeasurement();
           } else if (intent.getStringExtra(UpdateIntent.TASK_STATUS_PAYLOAD).equals(
@@ -189,11 +185,7 @@ public class MeasurementScheduler extends Service {
             tasksStatus.put(taskid, TaskStatus.CANCELLED);
             Parcelable[] results = intent.getParcelableArrayExtra(UpdateIntent.RESULT_PAYLOAD);
             if (results != null) {
-              if (priority == MeasurementTask.INVALID_PRIORITY) {
-                sendServerResultMessage(results, taskid, priority);
-              } else {
-                sendUserResultMessage(results, taskKey, taskid, priority);
-              }
+              sendResultToClient(results, priority, taskKey, taskid);
             }
           } else if (intent.getStringExtra(UpdateIntent.TASK_STATUS_PAYLOAD).equals(
               Config.TASK_STARTED)) {
@@ -538,44 +530,33 @@ public class MeasurementScheduler extends Service {
   }
 
   /**
-   * return measurement results to the client that submit the task
-   * 
-   * @param results
-   * @param clientKey
-   * @param taskId
-   * @param priority
+   * Send measurement results to the client that submit the task, or broadcast
+   * the result of server scheduled task to each connected clients
+   * @param results Measurement result to be sent
+   * @param priority Priority for the task. Determine the communication way -
+   *            Unicast for user task, Broadcast for server task
+   * @param clientKey Client key for the task
+   * @param taskId Unique task id for the task
    */
-  public void sendUserResultMessage(Parcelable[] results, String clientKey, String taskId,
-      int priority) {
-    Logger.d("Sending result to client " + clientKey + ": taskId " + taskId);
+  public void sendResultToClient(Parcelable[] results, int priority,
+                                 String clientKey, String taskId) {
     Intent intent = new Intent();
-    intent.setAction(UpdateIntent.USER_RESULT_ACTION + "." + clientKey);
     intent.putExtra(UpdateIntent.RESULT_PAYLOAD, results);
     intent.putExtra(UpdateIntent.TASKID_PAYLOAD, taskId);
-    // TODO(Hongyi): for delay measurement
+    if ( priority == MeasurementTask.USER_PRIORITY ) {
+      Logger.d("Sending result to client " + clientKey + ": taskId " + taskId);
+      intent.setAction(UpdateIntent.USER_RESULT_ACTION + "." + clientKey);
+    }
+    else {
+      // Solve the priority problem
+      Logger.d("Broadcasting result: taskId " + taskId);
+      intent.setAction(UpdateIntent.SERVER_RESULT_ACTION);
+    }    
+    // Hongyi: for delay measurement
     intent.putExtra("ts_scheduler_send", System.currentTimeMillis());
     this.sendBroadcast(intent);
   }
-
-  /**
-   * Broadcast the results of server scheduled task to each registered clients Now user can submit
-   * server level tasks too
-   * 
-   * @param results
-   * @param taskId
-   * @param priority
-   */
-  public void sendServerResultMessage(Parcelable[] results, String taskId, int priority) {
-    Logger.d("Broadcasting result: taskId " + taskId);
-    Intent intent = new Intent();
-    intent.setAction(UpdateIntent.SERVER_RESULT_ACTION);
-    intent.putExtra(UpdateIntent.RESULT_PAYLOAD, results);
-    intent.putExtra(UpdateIntent.TASKID_PAYLOAD, taskId);
-    // TODO(Hongyi): for delay measurement
-    intent.putExtra("ts_scheduler_send", System.currentTimeMillis());
-    this.sendBroadcast(intent);
-  }
-
+  
   @Override
   public IBinder onBind(Intent intent) {
     return messenger.getBinder();

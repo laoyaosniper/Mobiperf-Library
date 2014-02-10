@@ -36,6 +36,9 @@ public class ServerMeasurementTask implements Callable<MeasurementResult []> {
     this.contextCollector= new ContextCollector();
   }
 
+  /**
+   * Notify the scheduler that this task is started
+   */
   private void broadcastMeasurementStart() {
     Intent intent = new Intent();
     intent.setAction(UpdateIntent.MEASUREMENT_PROGRESS_UPDATE_ACTION);
@@ -45,6 +48,12 @@ public class ServerMeasurementTask implements Callable<MeasurementResult []> {
     scheduler.sendBroadcast(intent);
   }
 
+  /**
+   * Notify the scheduler that this task is finished executing.
+   * The result can be completed, paused or failed due to exception 
+   * @param results Results of the task
+   * @param error Measurement error leading to task's failure
+   */
   private void broadcastMeasurementEnd(MeasurementResult[] results
     , MeasurementError error) {
 
@@ -59,7 +68,7 @@ public class ServerMeasurementTask implements Callable<MeasurementResult []> {
       intent.putExtra(UpdateIntent.TASKKEY_PAYLOAD, realTask.getKey());
 
       if (results != null){
-        //TODO only single task can be paused, 
+        // Only single task can be paused
         if(results[0].getTaskProgress()==TaskProgress.PAUSED){
           intent.putExtra(UpdateIntent.TASK_STATUS_PAYLOAD, Config.TASK_PAUSED);
         }

@@ -39,8 +39,6 @@ public class UpdateIntent extends Intent {
   public static final String SERVER_RESULT_ACTION =
       PACKAGE_PREFIX + ".SERVER_RESULT_ACTION";
 
-  // TODO(Hongyi): make it formal
-  public static final String APP_ACTION = PACKAGE_PREFIX + ".APP_ACTION";
   /**
    * Creates an intent of the specified action with an optional message
    */

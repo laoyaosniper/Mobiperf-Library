@@ -37,6 +37,9 @@ public class UserMeasurementTask implements Callable<MeasurementResult[]> {
     this.contextCollector= new ContextCollector();
   }
 
+  /**
+   * Notify the scheduler that this task is started
+   */
   private void broadcastMeasurementStart() {
     Intent intent = new Intent();
     intent.setAction(UpdateIntent.MEASUREMENT_PROGRESS_UPDATE_ACTION);
@@ -48,6 +51,11 @@ public class UserMeasurementTask implements Callable<MeasurementResult[]> {
     scheduler.sendBroadcast(intent);
   }
 
+  /**
+   * Notify the scheduler that this task is finished executing.
+   * The result can be completed, paused or failed due to exception 
+   * @param results Results of the task
+   */
   private void broadcastMeasurementEnd(MeasurementResult[] results) {
     Intent intent = new Intent();
     intent.setAction(UpdateIntent.MEASUREMENT_PROGRESS_UPDATE_ACTION);

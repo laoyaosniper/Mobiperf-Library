@@ -55,38 +55,32 @@ import com.mobiperf_library.util.Logger;
 
 /**
  * @author jackjia,Hongyi Yao (hyyao@umich.edu)
- * The user API for Mobiperf library. Use singleton design pattern to ensure
- * that there only exist one instance of API
- * User: add task => Scheduler: run task, send finish event
- * => User: implement OnResultReturn to get result
- * thread safe
- * The client and server change TaskID as a Long type.
+ * The user API for Mobiperf library.
+ * Use singleton design pattern to ensure there only exist one instance of API
+ * User: create and add task => Scheduler: run task, send finish intent =>
+ * User: register BroadcastReceiver for userResultAction and serverResultAction
+ * TODO(Hongyi): is this class thread safe?
  */
 public final class API {
-  public final static int DNSLookup = 1;
-  public final static int HTTP = 2;
-  public final static int Ping = 3;
-  public final static int Traceroute = 4;
-  public final static int TCPThroughput = 5;
-  public final static int UDPBurst = 6;
-  
-  public final static int Parallel = 101;
-  public final static int Sequential = 102;
+  public enum TaskType {
+    DNSLOOKUP, HTTP, PING, TRACEROUTE, TCPTHROUGHPUT, UDPBURST,
+    PARALLEL, SEQUENTIAL, INVALID
+  }
 
+  /**
+   * Action name of different type of result for broadcast receiver.
+   * userResultAction is not a constant value. We append the clientKey to 
+   * UpdateIntent.USER_RESULT_ACTION so that only the user who submit the task
+   * can get the result   
+   */
   public String userResultAction;
-  public String serverResultAction;
-
-  public final static String PING_TYPE = PingTask.TYPE;
-  public final static String HTTP_TYPE = HttpTask.TYPE;
-  public final static String DNSLOOKUP_TYPE = DnsLookupTask.TYPE;
-  public final static String TRACEROUTE_TYPE = TracerouteTask.TYPE;
-  public final static String TCPTHROUGHPUT_TYPE = TCPThroughputTask.TYPE;
-  public final static String UDPBURST_TYPE = UDPBurstTask.TYPE;
+  public static final String SERVER_RESULT_ACTION =
+      UpdateIntent.SERVER_RESULT_ACTION;
   
   public final static int USER_PRIORITY = MeasurementTask.USER_PRIORITY;
   public final static int INVALID_PRIORITY = MeasurementTask.INVALID_PRIORITY;
   
-  private Context parent;
+  private Context applicationContext;
   
   private boolean isBound = false;
   private boolean isBindingToService = false;
@@ -94,156 +88,239 @@ public final class API {
   
   private String clientKey;
   
+  /**
+   * Singleton api object for the entire application
+   */
   private static API apiObject;
   
+  /**
+   * Make constructor private for singleton design
+   * @param parent Context when the object is created
+   * @param clientKey User-defined unique key for this application
+   */
   private API(Context parent, String clientKey) {
-    this.parent = parent;
+    Logger.d("API: constructor is called...");
+    this.applicationContext = parent.getApplicationContext();
     this.clientKey = clientKey;
 
     this.userResultAction = UpdateIntent.USER_RESULT_ACTION + "." + clientKey;
-    this.serverResultAction = UpdateIntent.SERVER_RESULT_ACTION;
-    Logger.e("API-> API()");
     bind();
   }
 
+  /**
+   * Actual method to get the singleton API object
+   * @param parent Context which the object lies in
+   * @param clientKey User-defined unique key for this application
+   * @return Singleton API object
+   */
   public static API getAPI(Context parent, String clientKey) {
-    Logger.e("API-> getAPI()");
+    Logger.d("API: Get API Singeton object...");
     if ( apiObject == null ) {
-      Logger.e("API-> getAPI() 2"); 
+      Logger.d("API: API object not initialized...");
       apiObject = new API(parent, clientKey);
-    }else{
+    }
+    else {
+      // Safeguard to avoid using unbound API object 
       apiObject.bind();
     }
-    
     return apiObject;
   }
   
   @Override
   public Object clone() throws CloneNotSupportedException {
+    // Prevent the singleton object to be copied
     throw new CloneNotSupportedException();
   }
   
   
-  /** Defines callbacks for service binding, passed to bindService() */
+  /** Defines callbacks for binding and unbinding scheduler*/
   private ServiceConnection serviceConn = new ServiceConnection() {
-
     @Override
     public void onServiceConnected(ComponentName className, IBinder service) {
-      Logger.d("onServiceConnected called.....");
-      Logger.e("API -> onServiceConnected called");
-      // We've bound to a Messenger and get Messenger instance
+      Logger.d("API -> onServiceConnected called");
+      // We've bound to the scheduler's messenger and get Messenger instance
       mSchedulerMessenger = new Messenger(service);
       isBound = true;
       isBindingToService = false;
     }
     
-      @Override
-      public void onServiceDisconnected(ComponentName arg0) {
-          Logger.d("onServiceDisconnected called");
-          mSchedulerMessenger = null;
-          isBound = false;
-      }
+    @Override
+    public void onServiceDisconnected(ComponentName arg0) {
+      Logger.d("API -> onServiceDisconnected called");
+      mSchedulerMessenger = null;
+      isBound = false;
+    }
   };
 
-  public Messenger getScheduler() {
+  /**
+   * Get available messenger after binding to scheduler
+   * @return the messenger if bound, null otherwise
+   */
+  private Messenger getScheduler() {
     if (isBound) {
-      Logger.e("API-> getScheduler 1");
+      Logger.e("API -> get available messenger");
       return mSchedulerMessenger;
     } else {
-      Logger.e("API-> getScheduler 2");
-
-      // TODO(Hongyi): currently always return null
-      if ( isBound ) {
-        return mSchedulerMessenger;
-      }
-      else {
-
-        return null;
-      }
+      Logger.e("API -> have not bound to a scheduler!");
+      return null;
     }
   }
   
+  /**
+   * Bind to scheduler, automatically called when the API is initialized
+   */
   public void bind() {
     Logger.e("API-> bind() called "+isBindingToService+" "+isBound);
     if (!isBindingToService && !isBound) {
       Logger.e("API-> bind() called 2");
       // Bind to the scheduler service if it is not bounded
       Intent intent = new Intent("com.mobiperf_library.MeasurementScheduler");
-      parent.getApplicationContext().bindService(intent, serviceConn, Context.BIND_AUTO_CREATE);
+//      parent.getApplicationContext().bindService(intent, serviceConn, Context.BIND_AUTO_CREATE);
+      applicationContext.bindService(intent, serviceConn, Context.BIND_AUTO_CREATE);
       isBindingToService = true;
     }
   }
   
+  /**
+   * Unbind from scheduler, called in activity's onDestroy callback function
+   */
   public void unbind() {
     Logger.e("API-> unbind called");
     if (isBound) {
       Logger.e("API-> unbind called 2");
-      parent.getApplicationContext().unbindService(serviceConn);
+//      parent.getApplicationContext().unbindService(serviceConn);
+      applicationContext.unbindService(serviceConn);
+
       isBound = false;
     }
   }
 
-  public MeasurementTask createTask( int taskType, Date startTime
+  /**
+   * Create a new MeasurementTask based on those parameters. Then submit it to
+   * scheduler by addTask or put into task list of parallel or sequential task
+   * @param taskType Type of measurement (ping, dns, traceroute, etc.) for this
+   *        measurement task.
+   * @param startTime Earliest time that measurements can be taken using this 
+   *        Task descriptor. The current time will be used in place of a null
+   *        startTime parameter. Measurements with a startTime more than 24 
+   *        hours from now will NOT be run.
+   * @param endTime Latest time that measurements can be taken using this Task
+   *        descriptor. Tasks with an endTime before startTime will be canceled.
+   *        Corresponding to the 24-hour rule in startTime, tasks with endTime
+   *        later than 24 hours from now will be assigned a new endTime that
+   *        ends 24 hours from now.
+   * @param intervalSec Minimum number of seconds to elapse between consecutive
+   *        measurements taken with this description.
+   * @param count Maximum number of times that a measurement should be taken
+   *        with this description. A count of 0 means to continue the 
+   *        measurement indefinitely (until end_time).
+   * @param priority Two level of priority: USER_PRIORITY for user task and
+   *        INVALID_PRIORITY for server task
+   * @param contextIntervalSec interval between the context collection (in sec)
+   * @param params Measurement parameters.
+   * @return Measurement task filled with those parameters
+   * @throws MeasurementError taskType is not valid
+   */
+  public MeasurementTask createTask( TaskType taskType, Date startTime
     , Date endTime, double intervalSec, long count, long priority
-    , int contextIntervalSec, Map<String, String> params) {
+    , int contextIntervalSec, Map<String, String> params)
+        throws MeasurementError {
     MeasurementTask task = null;    
     switch ( taskType ) {
-      case API.DNSLookup:
+      case DNSLOOKUP:
         task = new DnsLookupTask(new DnsLookupDesc(clientKey, startTime, endTime
           , intervalSec, count, priority, contextIntervalSec, params));
         break;
-      case API.HTTP:
+      case HTTP:
         task = new HttpTask(new HttpDesc(clientKey, startTime, endTime
           , intervalSec, count, priority, contextIntervalSec, params));
         break;
-      case API.Ping:
+      case PING:
         task = new PingTask(new PingDesc(clientKey, startTime, endTime
           , intervalSec, count, priority, contextIntervalSec, params));
         break;
-      case API.Traceroute:
+      case TRACEROUTE:
         task = new TracerouteTask(new TracerouteDesc(clientKey, startTime, endTime
           , intervalSec, count, priority, contextIntervalSec, params));
         break;
-      case API.TCPThroughput:
+      case TCPTHROUGHPUT:
         task = new TCPThroughputTask(new TCPThroughputDesc(clientKey, startTime
           , endTime, intervalSec, count, priority, contextIntervalSec, params));
         break;
-      case API.UDPBurst:
+      case UDPBURST:
         task = new UDPBurstTask(new UDPBurstDesc(clientKey, startTime, endTime
           , intervalSec, count, priority, contextIntervalSec, params));
         break;
       default:
-          break;
+        throw new MeasurementError("Undefined measurement type. Candidate: " +
+            "DNSLOOKUP, HTTP, PING, TRACEROUTE, TCPTHROUGHPUT, UDPBURST");
     }
     return task;
   }
-  
-  public MeasurementTask composeTasks(int manner, Date startTime
-    , Date endTime, double intervalSec, long count, long priority
-    , int contextIntervalSec, Map<String, String> params
-    , ArrayList<MeasurementTask> taskList) {
+
+  /**
+   * Create a parallel or sequential task based on the manner. An ArrayList of
+   * MeasurementTask must be provided as the real tasks to be executed
+   * @param manner Determine whether tasks in task list will be executed
+   *        parallelly or sequentially (back-to-back)
+   * @param startTime Earliest time that measurements can be taken using this 
+   *        Task descriptor. The current time will be used in place of a null
+   *        startTime parameter. Measurements with a startTime more than 24 
+   *        hours from now will NOT be run.
+   * @param endTime Latest time that measurements can be taken using this Task
+   *        descriptor. Tasks with an endTime before startTime will be canceled.
+   *        Corresponding to the 24-hour rule in startTime, tasks with endTime
+   *        later than 24 hours from now will be assigned a new endTime that
+   *        ends 24 hours from now.
+   * @param intervalSec Minimum number of seconds to elapse between consecutive
+   *        measurements taken with this description.
+   * @param count Maximum number of times that a measurement should be taken
+   *        with this description. A count of 0 means to continue the 
+   *        measurement indefinitely (until end_time).
+   * @param priority Two level of priority: USER_PRIORITY for user task and
+   *        INVALID_PRIORITY for server task
+   * @param contextIntervalSec interval between the context collection (in sec)
+   * @param params Measurement parameters.
+   * @param taskList tasks to be executed 
+   * @return The parallel or sequential task filled with those parameters
+   * @throws MeasurementError manner is not valid
+   */
+  public MeasurementTask composeTasks(TaskType manner, Date startTime,
+    Date endTime, double intervalSec, long count, long priority,
+    int contextIntervalSec, Map<String, String> params,
+    ArrayList<MeasurementTask> taskList) throws MeasurementError {
     MeasurementTask task = null;
     switch ( manner ) {
-      case Parallel:
+      case PARALLEL:
         task = new ParallelTask(new ParallelDesc(clientKey, startTime, endTime
           , intervalSec, count, priority, contextIntervalSec, params), taskList);
         break;
-      case Sequential:
+      case SEQUENTIAL:
         task = new SequentialTask(new SequentialDesc(clientKey, startTime, endTime
           , intervalSec, count, priority, contextIntervalSec, params), taskList);
         break;
       default:
-          break;
+        throw new MeasurementError("Undefined measurement composing type. " + 
+            " Candidate: PARALLEL, SEQUENTIAL");
     }
     return task;
   }
  
-  public void addTask ( MeasurementTask task )
+  /**
+   * Submit task to the scheduler. 
+   * Works in async way. The result will be returned in a intent whose action is
+   * USER_RESULT_ACTION + clientKey or SERVER_RESULT_ACTION
+   * @param task the task to be exectued, created by createTask(..)
+   *        or composeTask(..)
+   * @throws MeasurementError
+   */
+  public void submitTask ( MeasurementTask task )
       throws MeasurementError {
     Messenger messenger = getScheduler();
     if ( messenger != null ) {
-      // TODO(Hongyi): for delay measurement
-      task.getDescription().parameters.put("ts_api_send", String.valueOf(System.currentTimeMillis()));
+      // Hongyi: for delay measurement
+      task.getDescription().parameters.put("ts_api_send",
+        String.valueOf(System.currentTimeMillis()));
       
       Logger.d("Adding new task");
       Message msg = Message.obtain(null, Config.MSG_SUBMIT_TASK);
@@ -268,8 +345,8 @@ public final class API {
   }
 
   /**
-   * Cancel the task 
-   * @param localId task to be cancelled
+   * Cancel the task submitted to the scheduler
+   * @param localId task to be cancelled. Got by MeasurementTask.getTaskId() 
    * @return true for succeed, false for fail
    * @throws InvalidParameterException
    */
