@@ -21,6 +21,8 @@ public interface Config {
   public static final String DEFAULT_USER_AGENT = "MobiPerf-2.0 (Linux; Android)";
   public static final String PING_EXECUTABLE = "ping";
   public static final String PING6_EXECUTABLE = "ping6";
+  
+  public static final String SERVER_TASK_CLIENT_KEY = "LibraryServerTask";
 
   public static final String TASK_STARTED = "TASK_STARTED";
   public static final String TASK_FINISHED = "TASK_FINISHED";

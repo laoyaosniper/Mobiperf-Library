@@ -450,6 +450,10 @@ public class MeasurementScheduler extends Service {
   }
 
   public synchronized boolean cancelTask(String taskId, String clientKey) {
+    
+    if(clientKey.equals(Config.SERVER_TASK_CLIENT_KEY)){
+      return false;
+    }
 
     if (taskId != null && idToClientKey.containsKey(taskId)) {
       if (idToClientKey.get(taskId).equals(clientKey)) {
@@ -640,7 +644,7 @@ public class MeasurementScheduler extends Service {
 
     for (MeasurementTask task : tasksFromServer) {
       Logger.i("added task: " + task.toString());
-      task.measurementDesc.key = "Mobiperf Library";
+      task.measurementDesc.key = Config.SERVER_TASK_CLIENT_KEY;
       this.mainQueue.add(task);
     }
   }
