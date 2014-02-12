@@ -215,7 +215,6 @@ public class MeasurementResult implements Parcelable {
     StringBuilder builder = new StringBuilder();
     StringBuilderPrinter printer = new StringBuilderPrinter(builder);
     Formatter format = new Formatter();
-    // String results=getContextResult();
     try {
       if (type.equals(PingTask.TYPE)) {
         getPingResult(printer, values);

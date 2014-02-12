@@ -175,7 +175,6 @@ public final class API {
       Logger.e("API-> bind() called 2");
       // Bind to the scheduler service if it is not bounded
       Intent intent = new Intent("com.mobiperf_library.MeasurementScheduler");
-//      parent.getApplicationContext().bindService(intent, serviceConn, Context.BIND_AUTO_CREATE);
       applicationContext.bindService(intent, serviceConn, Context.BIND_AUTO_CREATE);
       isBindingToService = true;
     }
@@ -188,7 +187,6 @@ public final class API {
     Logger.e("API-> unbind called");
     if (isBound) {
       Logger.e("API-> unbind called 2");
-//      parent.getApplicationContext().unbindService(serviceConn);
       applicationContext.unbindService(serviceConn);
 
       isBound = false;

@@ -102,7 +102,6 @@ public class MeasurementScheduler extends Service {
 
   private volatile ConcurrentHashMap<String, String> idToClientKey;
 
-  // private HashMap<String, Messenger> mClients;
   private Messenger messenger;
 
   @Override
@@ -193,10 +192,6 @@ public class MeasurementScheduler extends Service {
           } else if (intent.getStringExtra(UpdateIntent.TASK_STATUS_PAYLOAD).equals(
               Config.TASK_RESUMED)) {
             tasksStatus.put(taskid, TaskStatus.RUNNING);
-            /**
-             * TODO starttime can not be set to current time, seems we need to the
-             * (pausetime-starttime) for preemptable tasks
-             */
           }
         } else if (intent.getAction().equals(UpdateIntent.CHECKIN_ACTION)
             || intent.getAction().equals(UpdateIntent.CHECKIN_RETRY_ACTION)) {
@@ -235,13 +230,13 @@ public class MeasurementScheduler extends Service {
   }
 
   // set current running task
-  public synchronized void setCurrentTask(MeasurementTask newtask) {
-    if (newtask == null) {
+  public synchronized void setCurrentTask(MeasurementTask newTask) {
+    if (newTask == null) {
       currentTask = null;
       Logger.d("Setting Current task -> null");
     } else {
-      Logger.d("Setting Current task: " + newtask.getTaskId());
-      currentTask = newtask.clone();
+      Logger.d("Setting Current task: " + newTask.getTaskId());
+      currentTask = newTask.clone();
     }
 
   }
@@ -361,7 +356,6 @@ public class MeasurementScheduler extends Service {
     //preemption condition
     if (current != null
         &&
-        // current instanceof PreemptibleMeasurementTask &&
         newTask.getDescription().priority < current.getDescription().priority
         && new Date(current.getDuration() + getCurrentTaskStartTime().getTime()).after(newTask
             .getDescription().endTime)) {
@@ -371,7 +365,6 @@ public class MeasurementScheduler extends Service {
         for (MeasurementTask mt : pendingTasks.keySet()) {
           if (current.equals(mt)) {
             current = mt;
-            // pendingTasks.remove(mt);
             break;
           }
         }

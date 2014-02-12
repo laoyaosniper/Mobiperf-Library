@@ -166,6 +166,7 @@ public class ParallelTask extends MeasurementTask{
     if(timeout==0){
       timeout=Config.DEFAULT_PARALLEL_TASK_DURATION;
     }else{
+      //this is the longest time a task can run before it is forcibly killed
       timeout*=2;
     }
     ArrayList<MeasurementResult> allResults=new ArrayList<MeasurementResult>();

@@ -105,6 +105,7 @@ public class SequentialTask extends MeasurementTask{
       desc.intervalSec, desc.count, desc.priority, desc.contextIntervalSec,
       desc.parameters));
     this.tasks=(List<MeasurementTask>) tasks.clone();
+    //we are using executor because it has builtin support for execution timeouts.
     executor=Executors.newSingleThreadExecutor();
     long totalduration=0;
     for(MeasurementTask mt: tasks){

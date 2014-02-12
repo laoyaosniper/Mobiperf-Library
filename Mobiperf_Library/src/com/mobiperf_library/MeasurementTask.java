@@ -25,7 +25,6 @@ public abstract class MeasurementTask
       Parcelable {
   protected MeasurementDesc measurementDesc;
   protected String taskId;
-  // protected Context parent;
 
 
   public static final int USER_PRIORITY = Integer.MIN_VALUE;
